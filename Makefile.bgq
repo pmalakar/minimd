@@ -1,0 +1,129 @@
+HELL = /bin/bash
+.SUFFIXES: .cpp .u 
+
+# ---------------------------------------------------------------------
+# compiler/linker settings
+# specify flags and libraries needed for your compiler
+
+# uncomment one and only one of the following lines to choose a compiler toolchain
+#COMPILER = GCC
+#COMPILER = LLVM
+COMPILER = XLC
+
+ifeq ($(COMPILER),XLC)
+CC       = /bgsys/drivers/ppcfloor/comm/xl.ndebug/bin/mpixlcxx_r
+CCFLAGS  = -g -O3 -qarch=qp -qtune=qp -qsmp=omp -qsimd=auto -qhot=level=2 -qprefetch -qunroll=yes
+DEPFLAGS = -M -qmakedep=gcc
+endif
+
+ifeq ($(COMPILER),GCC)
+CC       = /bgsys/drivers/ppcfloor/comm/gcc.legacy/bin/mpicc
+CCFLAGS  = -g -O3 -fopenmp
+DEPFLAGS = -M
+endif
+
+ifeq ($(COMPILER),LLVM)
+CC       = bgclang++
+CCFLAGS  = -g -O3
+DEPFLAGS = -M
+endif
+
+LINK      = $(CC)
+LINKFLAGS = $(CCFLAGS)
+# you can use MASS with non-XL compilers if you add the explicit path -L$(IBM_MAIN_DIR)/xlmass/bg/7.3/bglib64 and any dependencies.
+ifeq ($(COMPILER),XLC)
+  LINKFLAGS += -lmassv -lmass
+else
+  # libm is definitely slower than libmass...
+  LINKFLAGS += -lm
+endif
+
+SIZE       = size
+
+ARCHIVE    = ar
+ARFLAGS    = -rc
+
+# BGQ should not use shared libraries
+SHFLAGS    =
+SHLIBFLAGS = 
+
+# ---------------------------------------------------------------------
+# LAMMPS-specific settings
+# specify settings for LAMMPS features you will use
+# if you change any -D setting, do full re-compile after "make clean"
+
+# LAMMPS ifdef settings, OPTIONAL
+# see possible settings in doc/Section_start.html#2_2 (step 4)
+
+LMP_INC = -DLAMMPS_GZIP
+
+# MPI library
+# see discussion in doc/Section_start.html#2_2 (step 5)
+
+ifeq ($(COMPILER),LLVM)
+  MPI_FLAVOR = gcc.legacy
+  MPI_PATH   = 
+  MPI_INC    = -I/bgsys/drivers/ppcfloor/comm/$(MPI_FLAVOR)/include -I/bgsys/drivers/ppcfloor/comm/sys/include -I/bgsys/drivers/ppcfloor -I/bgsys/drivers/ppcfloor/spi/include -I/bgsys/drivers/ppcfloor/spi/include/kernel/cnk
+  MPI_LIB    = -L/bgsys/drivers/ppcfloor/comm/$(MPI_FLAVOR)/lib -lcxxmpich -lmpich -lopa -lmpl -lrt -ldl -L/bgsys/drivers/ppcfloor/comm/sys/lib -lpami -L/bgsys/drivers/ppcfloor/spi/lib -lSPI -lSPI_cnk -lpthread -lrt -lstdc++
+else
+  MPI_PATH   = 
+  MPI_PATH   = 
+  MPI_LIB    = -L/soft/perftools/hpctw/lib -lmpihpm -L/bgsys/drivers/ppcfloor/bgpm/lib -lbgpm -lrt -lstdc++ 
+endif
+
+MPI_INC += -DMPICH_SKIP_MPICXX 
+
+# FFT library, OPTIONAL
+# see discussion in doc/Section_start.html#2_2 (step 6)
+
+FFT_INC  = -I/soft/libraries/alcf/current/xl/FFTW2/include -DFFT_FFTW -DFFTW_SIZE
+FFT_PATH = #/soft/libraries/alcf/current/xl/FFTW2
+FFT_LIB  = -L/soft/libraries/alcf/current/xl/FFTW2/lib -ldfftw
+
+# JPEG library, OPTIONAL
+# see discussion in doc/Section_start.html#2_2 (step 7)
+# only needed if -DLAMMPS_JPEG listed with LMP_INC
+
+JPG_INC  =       
+JPG_PATH = 
+JPG_LIB  =
+
+# ---------------------------------------------------------------------
+# build rules and dependencies
+# no need to edit this section
+
+include Makefile.package.settings
+include Makefile.package
+
+EXTRA_INC = $(LMP_INC) $(PKG_INC) $(MPI_INC) $(FFT_INC) $(JPG_INC) $(PKG_SYSINC)
+EXTRA_PATH = $(PKG_PATH) $(MPI_PATH) $(FFT_PATH) $(JPG_PATH) $(PKG_SYSPATH)
+EXTRA_LIB = $(PKG_LIB) $(MPI_LIB) $(FFT_LIB) $(JPG_LIB) $(PKG_SYSLIB)
+
+# Link target
+
+$(EXE): $(OBJ)
+	$(LINK) $(LINKFLAGS) $(EXTRA_PATH) $(OBJ) $(EXTRA_LIB) $(LIB) -o $(EXE)
+	$(SIZE) $(EXE)
+
+# Library targets
+
+lib: $(OBJ)
+	$(ARCHIVE) $(ARFLAGS) $(EXE) $(OBJ)
+
+shlib: $(OBJ)
+	$(CC) $(CCFLAGS) $(SHFLAGS) $(SHLIBFLAGS) $(EXTRA_PATH) -o $(EXE) \
+        $(OBJ) $(EXTRA_LIB) $(LIB)
+
+# Compilation rules
+
+%.o:%.cpp
+	$(CC) $(CCFLAGS) $(SHFLAGS) $(EXTRA_INC) -c $<
+
+# This is disabled because it doesn't work with XLC.  Uncomment the line to re-enable for GCC and LLVM.
+%.d:%.cpp
+#	$(CC) $(CCFLAGS) $(EXTRA_INC) $(DEPFLAGS) $< > $@
+
+# Individual dependencies
+
+DEPENDS = $(OBJ:.o=.d)
+sinclude $(DEPENDS)
