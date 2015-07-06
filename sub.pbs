@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+#PBS -N test
+#PBS -l mppwidth=24
+#PBS -l walltime=00:20:00
+#PBS -q debug
+#PBS -M pmalakar@anl.gov
+#PBS -j oe
+#PBS -V
+
+set MPICH_ENV_DISPLAY 1
+
+cd $PBS_O_WORKDIR
+NODES=`cat $PBS_NODEFILE | wc -l`
+
+date
+aprun -n $NODES ./miniMD_cray -s 20
+date
+
+
