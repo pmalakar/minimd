@@ -202,6 +202,9 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 
+			for(int i = 0; i < 3; i++) 
+    		printf("%d: %d: atom %d %d positions %lf %lf %lf\n", comm.me, n, i, atom.type, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
+
     }
   } //end OpenMP parallel
 }
