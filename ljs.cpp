@@ -482,6 +482,9 @@ int main(int argc, char** argv)
 
   thermo.compute(-1, atom, neighbor, force, timer, comm);
 
+	for(int i = 0; i < 2; i++) 
+		printf("%d: TESTING: atom velocities %lf %lf %lf\n", me, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]); 
+
   if(me == 0) {
     double time_other = timer.array[TIME_TOTAL] - timer.array[TIME_FORCE] - timer.array[TIME_NEIGH] - timer.array[TIME_COMM];
     printf("\n\n");

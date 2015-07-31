@@ -32,6 +32,7 @@
 #define PRINTDEBUG(a)
 #include "stdio.h"
 #include "integrate.h"
+//#include "output.h"
 #include "openmp.h"
 #include "math.h"
 
@@ -71,6 +72,9 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
                     Comm &comm, Thermo &thermo, Timer &timer)
 {
   int i, n;
+
+	char dumpfile[] = "dump.txt";
+	FILE *dumpfp = fopen (dumpfile, "w");
 
   comm.timer = &timer;
   timer.array[TIME_TEST] = 0.0;
@@ -202,6 +206,13 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 
+			if (comm.me < 10) printf("%d: CHECK BOX: %lf %lf %lf %lf %lf %lf\n", atom.box.xlo, atom.box.xhi, atom.box.ylo, atom.box.yhi, atom.box.zlo, atom.box.zhi);
+			for(int i = 0; i < 5; i++) {
+    		fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
+    		fprintf(dumpfp, "%d: %d: atom %d of %d velocities %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]);
+			}
     }
   } //end OpenMP parallel
+
+	fclose(dumpfp);
 }
