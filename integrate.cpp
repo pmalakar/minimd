@@ -35,6 +35,7 @@
 //#include "output.h"
 #include "openmp.h"
 #include "math.h"
+#include <mpi.h>
 
 Integrate::Integrate() {sort_every=20;}
 Integrate::~Integrate() {}
@@ -74,7 +75,7 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
   int i, n;
 
 	char dumpfile[] = "dump.txt";
-	FILE *dumpfp = fopen (dumpfile, "w");
+	FILE *dumpfp = fopen (dumpfile, "w+");
 
   comm.timer = &timer;
   timer.array[TIME_TEST] = 0.0;
@@ -204,15 +205,42 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 
       finalIntegrate();
 
+/*
+	  if (n == 1 || n == 100) printf("%d: CHECK BOX: %d %lf %lf %lf %lf %lf %lf\n", comm.me, n, atom.box.xlo, atom.box.xhi, atom.box.ylo, atom.box.yhi, atom.box.zlo, atom.box.zhi);
+ * e.g. output
+ * 		100: CHECK BOX: 1 2.099495 4.198990 8.397981 10.497476 8.397981 10.497476
+		100: CHECK BOX: 100 2.099495 4.198990 8.397981 10.497476 8.397981 10.497476
+ *
+ */ 
+
+	  int numAtoms;
+	  double time;
+	  MPI_Scan(&atom.nlocal,&numAtoms,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+      printf("%d: num atoms %d at %dth step\n", comm.me, numAtoms, n); 
+	
+	  double t = MPI_Wtime();
+	  for(int i = 0; i < atom.nlocal ; i++) {
+    	fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
+    	printf("%d: %d: atom %d of %d positions %d %lf | %d %lf | %d %lf\n", comm.me, n, i, atom.nlocal, i * PAD + 0, atom.x[i * PAD + 0], i * PAD + 1, atom.x[i * PAD + 1], i * PAD + 2, atom.x[i * PAD + 2]);
+    	printf("%d: %d: atom %d of %d velocities %d %lf | %d %lf | %d %lf\n", comm.me, n, i, atom.nlocal, i * PAD + 0, atom.v[i * PAD + 0], i * PAD + 1, atom.v[i * PAD + 1], i * PAD + 2, atom.v[i * PAD + 2]);
+	  }
+	  t = MPI_Wtime() - t;
+	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+	  t = MPI_Wtime();
+	  /*
+  		if (comm.me == 0)
+      		MPI_File_get_size(mpifh,&mpifo);
+    	MPI_Bcast(&mpifo, 1, MPI_INT, 0, world);
+ 	  */
+	  t = MPI_Wtime() - t;
+	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+	  if (n == 1)
+		MPI_File_write_at_all(fh, offset, atom.x, 3*atom.nlocal, MPI_DOUBLE, MPI_STATUS_IGNORE);
+
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 
-			if (n == 1 || n == 100) printf("%d: CHECK BOX: %d %lf %lf %lf %lf %lf %lf\n", comm.me, n, atom.box.xlo, atom.box.xhi, atom.box.ylo, atom.box.yhi, atom.box.zlo, atom.box.zhi);
-			for(int i = 0; i < 5; i++) {
-    		fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
-    		fprintf(dumpfp, "%d: %d: atom %d of %d velocities %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]);
-    		printf("%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
-    		printf("%d: %d: atom %d of %d velocities %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]);
-			}
     }
   } //end OpenMP parallel
 
