@@ -236,8 +236,8 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 	  t = MPI_Wtime() - t;
 	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-	  if (n == 1)
-		MPI_File_write_at_all(fh, offset, atom.x, 3*atom.nlocal, MPI_DOUBLE, MPI_STATUS_IGNORE);
+	  //if (n == 1)
+		//	MPI_File_write_at_all(fh, offset, atom.x, 3*atom.nlocal, MPI_DOUBLE, MPI_STATUS_IGNORE);
 
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 

@@ -48,6 +48,8 @@
 #include "force.h"
 #include "force_lj.h"
 
+#include "client.h"
+
 #define MAXLINE 256
 
 int input(In &, const char*);
@@ -207,6 +209,12 @@ int main(int argc, char** argv)
       continue;
     }
 
+    if((strcmp(argv[i], "-ip") == 0) || (strcmp(argv[i], "--ip_address") == 0)) {
+			if (ipaddress == NULL) ipaddress = new char[128];
+      strcpy(ipaddress, argv[++i]);
+      continue;
+    }
+
     if((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0)) {
       printf("\n-----------------------------------------------------------------------------------------------------------\n");
       printf("-------------" VARIANT_STRING "--------------------\n");
@@ -260,6 +268,9 @@ int main(int argc, char** argv)
     }
   }
 
+	if (me == 0) 
+		initConnection();
+		
 
   Atom atom(ntypes);
   Neighbor neighbor(ntypes);
