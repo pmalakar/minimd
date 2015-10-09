@@ -70,11 +70,11 @@ int initConnection()
 */
 
 		ticks = time(NULL);
-    snprintf(sendBuff, sizeof(sendBuff), "%.24s\r\n", ctime(&ticks));
+    snprintf(sendBuff, sizeof(sendBuff), "%.24s\n", ctime(&ticks));
     n = write(sockfd, sendBuff, strlen(sendBuff)); 
     if(n < 0)
     {
-        printf("\n Write error \n");
+        printf("\nInitial write error \n");
     } 
 
     return 0;
@@ -87,15 +87,15 @@ int sendData() {
 		for (int i=0; i<10 ; i++) {
     	snprintf(sendBuff, sizeof(sendBuff), "%5.2lf\n", data[i]);
     	n = write(sockfd, sendBuff, strlen(sendBuff)); 
+    	if(n < 0)
+         printf("\n Write error %d %s\n", errno, strerror(errno));
 		}
-
-    if(n < 0)
-    {
-        printf("\n Write error \n");
-    } 
 
     return 0;
 
 }
 
+void finiConnection() {
+	close(sockfd);
+}
 
