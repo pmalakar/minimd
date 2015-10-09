@@ -8,8 +8,8 @@ LINK = $(CC)
 
 # MiniMD Files
 
-SRC = client.cpp	ljs.cpp input.cpp integrate.cpp atom.cpp force_lj.cpp neighbor.cpp thermo.cpp comm.cpp timer.cpp output.cpp setup.cpp force_eam.cpp  
-INC = client.h ljs.h atom.h force.h neighbor.h thermo.h timer.h comm.h integrate.h threadData.h variant.h types.h force_eam.h force_lj.h openmp.h
+SRC = client.cpp dump.cpp ljs.cpp input.cpp integrate.cpp atom.cpp force_lj.cpp neighbor.cpp thermo.cpp comm.cpp timer.cpp output.cpp setup.cpp force_eam.cpp  
+INC = client.h dump.h ljs.h atom.h force.h neighbor.h thermo.h timer.h comm.h integrate.h threadData.h variant.h types.h force_eam.h force_lj.h openmp.h
 
 # Definitions
 
