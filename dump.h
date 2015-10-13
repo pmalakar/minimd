@@ -7,8 +7,14 @@
 //extern FILE *dumpfp;
 
 void initDump(Comm &);
-void dump(Atom &, int, Comm &);
-void finiDump();
+
+void pack(Atom &, int, Comm &);
+void unpack(void);
+
+void writeFile(Atom &, int, Comm &);
+void finiDump(Comm &);
+
+extern float *pos, *vel;
 
 #endif
 

@@ -10,19 +10,26 @@
 #include <errno.h>
 #include <time.h> 
 
+#include "comm.h"
+#include "atom.h"
 #include "client.h"
+#include "dump.h"
 
 char *ipaddress;
 
-int sockfd = 0, n = 0;
+int sockfd = 0, numbytes = 0;
 char recvBuff[1024];
 char sendBuff[1024];
 time_t ticks; 
 struct sockaddr_in serv_addr; 
 
+int flag = 0;
+
 //int main(int argc, char *argv[]) {}
 int initConnection()
 {
+
+		flag = 0;
 
     if(ipaddress == NULL)
     {
@@ -49,13 +56,12 @@ int initConnection()
         return 1;
     } 
 
-    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-       printf("\n Error : Connect Failed \n");
+    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+       printf("\nError : Connect Failed \n");
        return 1;
     } 
 		else {
-       printf("\n Connection Successful \n");
+       printf("\nConnection Successful\nSize of sendBuff=%d\n", sizeof(sendBuff));
 		}
 
 /*
@@ -71,8 +77,8 @@ int initConnection()
 
 		ticks = time(NULL);
     snprintf(sendBuff, sizeof(sendBuff), "%.24s\n", ctime(&ticks));
-    n = write(sockfd, sendBuff, strlen(sendBuff)); 
-    if(n < 0)
+    numbytes = write(sockfd, sendBuff, strlen(sendBuff)); 
+    if(numbytes < 0)
     {
         printf("\nInitial write error \n");
     } 
@@ -81,18 +87,61 @@ int initConnection()
 
 }
 
-int sendData() {
+int send(Atom &atom, int n, Comm &comm) {
 
+		printf("Inside send\n"); //, size[0], pos[0], pos[1], pos[2]);
+		if (flag == 1) return 1;
+
+		printf("Inside send\n"); //, size[0], pos[0], pos[1], pos[2]);
+		if (sockfd == NULL) {
+			printf("\nsocket fd null\n");
+			return 1;
+		}
+
+/*
 		double data[10];
-		for (int i=0; i<10 ; i++) {
-    	snprintf(sendBuff, sizeof(sendBuff), "%5.2lf\n", data[i]);
-    	n = write(sockfd, sendBuff, strlen(sendBuff)); 
-    	if(n < 0)
-         printf("\n Write error %d %s\n", errno, strerror(errno));
+		for (int i=0; i<1 ; i++) {
+			if (n == 20) { 
+	    	snprintf(sendBuff, sizeof(sendBuff), "End");
+				flag = 1;
+			}
+			else
+    		snprintf(sendBuff, sizeof(sendBuff), "%d:%d: %5.2lf\n", comm.me, n, data[i]);
+
+    	numbytes = write(sockfd, sendBuff, strlen(sendBuff)); 
+    	if(numbytes < 0)
+         printf("\nWrite error %d %s\n", errno, strerror(errno));
+			else
+         printf("\nWrite success\n");
+		}
+*/
+
+		int size[1];
+		size[0] = 3*atom.nlocal;
+
+		printf("Wrote %d %f %f %f\n", size[0], pos[0], pos[1], pos[2]);
+		fflush(stdout);
+		if (n < 2) {
+    //	numbytes = write(sockfd, size, 1);
+    	//numbytes = write(sockfd, pos, size[0]*sizeof(float)); //3*atom.nlocal);
+    	numbytes = write(sockfd, pos, sizeof(float)) ; //size[0]*sizeof(float)); //3*atom.nlocal);
+    	if(numbytes < 0)
+         printf("\nWrite error %d %s\n", errno, strerror(errno));
+			else
+         printf("\nWrite success %d\n", numbytes);
+			
 		}
 
     return 0;
 
+}
+
+void writeRemote(Atom &atom, int n, Comm &comm) {
+	
+	pack(atom, n, comm);
+	if (comm.me == 0) 
+	send(atom, n, comm);
+	unpack(); //atom, n, comm);
 }
 
 void finiConnection() {

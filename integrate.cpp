@@ -203,8 +203,8 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 
       finalIntegrate();
 	 
-			dump(atom, n, comm);
-			sendData();
+			//writeFile(atom, n, comm);
+			writeRemote(atom, n, comm);
 
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 
