@@ -49,6 +49,7 @@
 #include "force_lj.h"
 
 #include "client.h"
+#include "dump.h"
 
 #define MAXLINE 256
 
@@ -268,10 +269,6 @@ int main(int argc, char** argv)
     }
   }
 
-	if (me == 0) 
-		initConnection();
-		
-
   Atom atom(ntypes);
   Neighbor neighbor(ntypes);
   Integrate integrate;
@@ -458,6 +455,12 @@ int main(int argc, char** argv)
     atom.sort(neighbor);
   comm.borders(atom);
 
+#ifdef DEBUG
+	if (me == 0) 
+		initConnection();
+	initDump(comm);	
+#endif
+
   force->evflag = 1;
   #pragma omp parallel
   {
@@ -493,8 +496,8 @@ int main(int argc, char** argv)
 
   thermo.compute(-1, atom, neighbor, force, timer, comm);
 
-	for(int i = 0; i < 2; i++) 
-		printf("%d: TESTING: atom velocities %lf %lf %lf\n", me, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]); 
+//	for(int i = 0; i < 2; i++) 
+//		printf("%d: TESTING: atom velocities %lf %lf %lf\n", me, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]); 
 
   if(me == 0) {
     double time_other = timer.array[TIME_TOTAL] - timer.array[TIME_FORCE] - timer.array[TIME_NEIGH] - timer.array[TIME_COMM];
@@ -510,6 +513,12 @@ int main(int argc, char** argv)
 
   if(yaml_output)
     output(in, atom, force, neighbor, comm, thermo, integrate, timer, screen_yaml);
+
+#ifdef DEBUG
+	if (me == 0) 
+		finiConnection();
+	finiDump(comm);
+#endif
 
   delete force;
   MPI_Barrier(MPI_COMM_WORLD);
