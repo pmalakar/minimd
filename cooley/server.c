@@ -14,12 +14,15 @@
 
 int main(int argc, char *argv[])
 {
-    int n, listenfd = 0, connfd = 0;
+    int i, n, listenfd = 0, connfd = 0;
     struct sockaddr_in serv_addr; 
 
     char sendBuff[1024];
     char recvBuff[1024];
+
+		float position[20000];
     time_t ticks; 
+		int size[1];
 
 		getIP();
 		fflush(stdout);
@@ -37,24 +40,31 @@ int main(int argc, char *argv[])
 
     listen(listenfd, 10); 
 
-    //while(1)
-    //{
-        connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
-				//while ((n = read(connfd, recvBuff, sizeof(recvBuff)-1)) > 0)
-				while (1)	//(n = read(connfd, recvBuff, sizeof(recvBuff)-1)) > 0)
-    		{
+    connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
+		n = read(connfd, recvBuff, sizeof(recvBuff)-1);
+		while (1)	//(n = read(connfd, recvBuff, sizeof(recvBuff)-1)) > 0)
+    {
+/*
 					n = read(connfd, recvBuff, sizeof(recvBuff)-1);
-        	recvBuff[n] = 0;
+        	recvBuff[n] = '\0';
 					if (strcmp (recvBuff, "End") == 0) break;
         	if(fputs(recvBuff, stdout) == EOF)
            	printf("\n Error : Fputs error\n");
+*/
+				//	n = read(connfd, size, sizeof(size)-1);
+					//n = read(connfd, position, sizeof(position)-1);
+					n = read(connfd, position, 10);
+					if (n>0) {
+						printf("read %d bytes: %d\n", n, sizeof(position));
+						for (i=0; i<1; i++) printf("Read pos[%d] %f\n", i, position[i]);	
+					}
 					fflush(stdout);
-    		} 
+    } 
 
-        close(connfd);
-				printf("Connection closed\n\n");
-        sleep(1);
-    //}
+    close(connfd);
+		printf("Connection closed\n\n");
+    sleep(1);
 
 }
+
 

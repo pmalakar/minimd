@@ -455,10 +455,11 @@ int main(int argc, char** argv)
     atom.sort(neighbor);
   comm.borders(atom);
 
-	if (me == 0) { 
+#ifdef DEBUG
+	if (me == 0) 
 		initConnection();
-  }
 	initDump(comm);	
+#endif
 
   force->evflag = 1;
   #pragma omp parallel
@@ -513,10 +514,11 @@ int main(int argc, char** argv)
   if(yaml_output)
     output(in, atom, force, neighbor, comm, thermo, integrate, timer, screen_yaml);
 
-	if (me == 0) {
+#ifdef DEBUG
+	if (me == 0) 
 		finiConnection();
-		finiDump();
-	}
+	finiDump(comm);
+#endif
 
   delete force;
   MPI_Barrier(MPI_COMM_WORLD);
