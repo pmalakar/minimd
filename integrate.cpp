@@ -216,8 +216,8 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 	  int numAtoms;
 	  double time;
 	  MPI_Scan(&atom.nlocal,&numAtoms,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+#ifdef DEBUG
       printf("%d: num atoms %d at %dth step\n", comm.me, numAtoms, n); 
-	
 	  double t = MPI_Wtime();
 	  for(int i = 0; i < atom.nlocal ; i++) {
     	fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
@@ -236,6 +236,7 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 	  t = MPI_Wtime() - t;
 	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
+#endif	
 	  //if (n == 1)
 		//	MPI_File_write_at_all(fh, offset, atom.x, 3*atom.nlocal, MPI_DOUBLE, MPI_STATUS_IGNORE);
 
