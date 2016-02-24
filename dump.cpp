@@ -31,7 +31,7 @@ void initDump(Comm &comm) {
 		printf("TESTING %d\n", PAD);
 	}
 
-	MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
+	//MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
 
 }
 
@@ -89,32 +89,45 @@ void dump(Atom &atom, int n, Comm &comm) {
 		MPI_Offset offset;
 		MPI_Status status;
 		double time;
-	  double t = MPI_Wtime();
 	  
+		MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
   	if (comm.me == 0)
     	MPI_File_get_size(posfh, &mpifo);
    	MPI_Bcast(&mpifo, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 		offset = mpifo;
 		mpifo += 3*numAtoms * sizeof(float);
-		printf("%d: %d: Current offset %d %d\n", comm.me, n, mpifo, offset);
+		if (comm.me == 0) printf("%d: %d: Current offset %d %d\n", comm.me, n, mpifo, offset);
 		
+	  double t = MPI_Wtime();
 		MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
 		MPI_File_write_all(posfh, pos, 3*atom.nlocal, MPI_FLOAT, &status);
+		//MPI_File_write_at_all(posfh, mpifo, pos, 3*atom.nlocal, MPI_FLOAT, &status);
+	  t = MPI_Wtime() - t;
+//		if (status != MPI_SUCCESS) perror("Collective write unsuccessful");
 		MPI_Get_count (&status, MPI_FLOAT, &count);
-		printf("%d: %d: written %d entries %f %f\n", comm.me, n, count, atom.x[0], atom.x[1]);
+		MPI_File_close(&posfh);
+	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-			//MPI_File_seek(posfh, mpifo, MPI_SEEK_SET);
+		if (comm.me == 0)	{
+			printf("%d: %d: written %d floats in %4.2lf s\n", comm.me, n, count, time);
+			//printf("%d: %d: written %f %f %f\n", comm.me, n, atom.x[0], atom.x[1], atom.x[2]);
+			printf("%d: %d: written %d entries %f %f %f\n", comm.me, n, count, pos[0], pos[1], pos[2]);
+		}
+		if (n < 3 && comm.me < 4)	
+	 		for(int i = 0; i < atom.nlocal ; i++) 
+				printf("%d: %d: wrote %dth atom %f %f %f\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
+
+		MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDONLY, MPI_INFO_NULL, &posfh);
 		MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
 		MPI_File_read_all(posfh, rtest, 3*atom.nlocal, MPI_FLOAT, &status);
+		//MPI_File_read_at_all(posfh, mpifo, rtest, 3*atom.nlocal, MPI_FLOAT, &status);
+		MPI_File_close(&posfh);
 		MPI_Get_count (&status, MPI_FLOAT, &rcount);
-		printf("%d: %d: read %d floats\n", comm.me, n, rcount);
-		if (n < 3)
+		if (comm.me == 0) printf("%d: %d: have read %d floats\n", comm.me, n, rcount);
+		if (n < 3 && comm.me < 4)
 	 		for(int i = 0; i < atom.nlocal ; i++) 
 				printf("%d: %d: read %f %f %f\n", comm.me, n, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
-
-	  t = MPI_Wtime() - t;
-	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 }
 

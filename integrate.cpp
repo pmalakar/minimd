@@ -204,8 +204,8 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
       finalIntegrate();
 	 
 #ifdef DEBUG
-			//writeFile(atom, n, comm);
-			writeRemote(atom, n, comm);
+			writeFile(atom, n, comm);
+			//writeRemote(atom, n, comm);
 #endif
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 

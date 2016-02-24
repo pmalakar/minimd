@@ -456,8 +456,8 @@ int main(int argc, char** argv)
   comm.borders(atom);
 
 #ifdef DEBUG
-	if (me == 0) 
-		initConnection();
+	//if (me == 0) 
+	//	initConnection();
 	initDump(comm);	
 #endif
 
@@ -515,8 +515,8 @@ int main(int argc, char** argv)
     output(in, atom, force, neighbor, comm, thermo, integrate, timer, screen_yaml);
 
 #ifdef DEBUG
-	if (me == 0) 
-		finiConnection();
+	//if (me == 0) 
+		//finiConnection();
 	finiDump(comm);
 #endif
 
