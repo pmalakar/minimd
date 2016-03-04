@@ -137,6 +137,7 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
                 if(dz < -atom.box.zprd) dz += atom.box.zprd;
 
                 double d = dx * dx + dy * dy + dz * dz;
+								if (comm.me == 0) printf ("DEBUG: %d %lf\n", n, d);
 
                 if(d > d_max) d_max = d;
               }
@@ -203,10 +204,10 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 
       finalIntegrate();
 	 
-#ifdef DEBUG
+//#ifdef DEBUG
 			writeFile(atom, n, comm);
 			//writeRemote(atom, n, comm);
-#endif
+//#endif
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 
     }
