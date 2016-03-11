@@ -13,7 +13,7 @@ char *posfile = "positions.txt";
 char *velfile = "velocities.txt";
 FILE *dumpfp;
 
-int numAtoms;
+int numAtoms, totalAtoms;
 int count, rcount;
 float *pos, *vel, *rtest;
 
@@ -55,8 +55,9 @@ void pack(Atom &atom, int n, Comm &comm) {
 		rtest = (float *) malloc (3*atom.nlocal * sizeof(float));
 
 	  MPI_Scan(&atom.nlocal,&numAtoms,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-    printf("%d: Mine %d Total atoms %d at %dth step\n", comm.me, atom.nlocal, numAtoms, n); 
-	
+	  MPI_Reduce (&numAtoms, &totalAtoms, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    printf("%d: Mine %d Partial sum %d Total atoms %d at %dth step\n", comm.me, atom.nlocal, totalAtoms, numAtoms, n); 
+
 	  double t = MPI_Wtime();
 
 	  for(int i = 0; i < atom.nlocal ; i++) {
@@ -117,16 +118,16 @@ void dump(Atom &atom, int n, Comm &comm) {
 	  MPI_Reduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 		if (comm.me == 0)	{
-			printf("%d: %d: written %d floats in %4.2lf s\n", comm.me, n, count, time);
+			printf("%d: %d: written %d floats (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
 			//printf("%d: %d: written %f %f %f\n", comm.me, n, atom.x[0], atom.x[1], atom.x[2]);
 			printf("%d: %d: written %d entries %f %f %f\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 		}
 
-#ifdef DEBUG
+//#ifdef DEBUG
 		if (n < 3 && comm.me < 4)	
 	 		for(int i = 0; i < atom.nlocal ; i++) 
 				printf("%d: %d: wrote %dth atom %f %f %f\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
-#endif
+//#endif
 
 		MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDONLY, MPI_INFO_NULL, &posfh);
 		//MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
