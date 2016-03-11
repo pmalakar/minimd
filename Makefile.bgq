@@ -17,10 +17,10 @@ ROOT =	miniMD
 EXE =	$(ROOT)
 OBJ =	$(SRC:.cpp=.o) $(KOKKOS_SRC:.cpp=.o) 
 
-CCFLAGS  = -g -O3 #-qarch=qp -qtune=qp -qsmp=omp -qsimd=auto -qhot=level=2 -qprefetch -qunroll=yes
+CCFLAGS  = -g -O3 # -DDEBUG #-qarch=qp -qtune=qp -qsmp=omp -qsimd=auto -qhot=level=2 -qprefetch -qunroll=yes
 #CCFLAGS = -O3 -DMPICH_IGNORE_CXX_SEEK -DDEVICE=1  -I./ -g -mavx -fopenmp -DUSE_SIMD -DNOCHUNK
 LINKFLAGS = -O3 -g #-mavx #-fopenmp 
-MPI_LIB    = -L/soft/perftools/hpctw/lib -lmpihpm -L/bgsys/drivers/ppcfloor/bgpm/lib -lbgpm -lrt -lstdc++ 
+MPI_LIB    = #-L/soft/perftools/hpctw/lib -lmpihpm -L/bgsys/drivers/ppcfloor/bgpm/lib -lbgpm -lrt -lstdc++ 
 USRLIB = $(MPI_LIB)
 SYSLIB =  
 
