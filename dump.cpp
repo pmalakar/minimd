@@ -36,27 +36,17 @@ void initDump(Comm &comm) {
 }
 
 void pack(Atom &atom, int n, Comm &comm) {
-/*
-	  if (n == 1 || n == 100) printf("%d: CHECK BOX: %d %lf %lf %lf %lf %lf %lf\n", comm.me, n, atom.box.xlo, atom.box.xhi, atom.box.ylo, atom.box.yhi, atom.box.zlo, atom.box.zhi);
- * e.g. output
- * 		100: CHECK BOX: 1 2.099495 4.198990 8.397981 10.497476 8.397981 10.497476
-		100: CHECK BOX: 100 2.099495 4.198990 8.397981 10.497476 8.397981 10.497476
- *
- */ 
+ 
 		int ret;
 	  double time;
-
-		//float *pos = new float[3*atom.nlocal];
-		//float *vel = new float[3*atom.nlocal];
-		//float *rtest = new float[3*atom.nlocal];
 
 		pos = (float *) malloc (3*atom.nlocal * sizeof(float));
 		vel = (float *) malloc (3*atom.nlocal * sizeof(float));
 		rtest = (float *) malloc (3*atom.nlocal * sizeof(float));
 
 	  MPI_Scan(&atom.nlocal,&numAtoms,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-	  MPI_Reduce (&numAtoms, &totalAtoms, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    printf("%d: Mine %d Partial sum %d Total atoms %d at %dth step\n", comm.me, atom.nlocal, totalAtoms, numAtoms, n); 
+	  MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    printf("%d: %d: Mine %d Partial sum %d Total atoms %d\n", comm.me, n, atom.nlocal, numAtoms, totalAtoms); 
 
 	  double t = MPI_Wtime();
 
