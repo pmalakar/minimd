@@ -276,6 +276,7 @@ int main(int argc, char** argv)
   Comm comm;
   Timer timer;
   ThreadData threads;
+  Dump dump;
 
   Force* force;
 
@@ -455,11 +456,11 @@ int main(int argc, char** argv)
     atom.sort(neighbor);
   comm.borders(atom);
 
-#ifdef DEBUG
+//#ifdef DEBUG
 	//if (me == 0) 
 	//	initConnection();
-	initDump(comm);	
-#endif
+  dump.initDump(comm, integrate.ntimes);	
+//#endif
 
   force->evflag = 1;
   #pragma omp parallel
@@ -482,7 +483,7 @@ int main(int argc, char** argv)
   }
 
   timer.barrier_start(TIME_TOTAL);
-  integrate.run(atom, force, neighbor, comm, thermo, timer);
+  integrate.run(atom, force, neighbor, comm, thermo, timer, dump);
   timer.barrier_stop(TIME_TOTAL);
 
   int natoms;
@@ -517,7 +518,7 @@ int main(int argc, char** argv)
 #ifdef DEBUG
 	//if (me == 0) 
 		//finiConnection();
-	finiDump(comm);
+	dump.finiDump(comm);
 #endif
 
   delete force;

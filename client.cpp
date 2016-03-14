@@ -87,7 +87,7 @@ int initConnection()
 
 }
 
-int send(Atom &atom, int n, Comm &comm) {
+int send(Atom &atom, int n, Comm &comm, Dump &dump) {
 
 		printf("Inside send\n"); //, size[0], pos[0], pos[1], pos[2]);
 		if (flag == 1) return 1;
@@ -119,12 +119,12 @@ int send(Atom &atom, int n, Comm &comm) {
 		int size[1];
 		size[0] = 3*atom.nlocal;
 
-		printf("Wrote %d %f %f %f\n", size[0], pos[0], pos[1], pos[2]);
+		printf("Wrote %d %f %f %f\n", size[0], dump.pos[0], dump.pos[1], dump.pos[2]);
 		fflush(stdout);
 		if (n < 2) {
     //	numbytes = write(sockfd, size, 1);
     	//numbytes = write(sockfd, pos, size[0]*sizeof(float)); //3*atom.nlocal);
-    	numbytes = write(sockfd, pos, sizeof(float)) ; //size[0]*sizeof(float)); //3*atom.nlocal);
+    	numbytes = write(sockfd, dump.pos, sizeof(float)) ; //size[0]*sizeof(float)); //3*atom.nlocal);
     	if(numbytes < 0)
          printf("\nWrite error %d %s\n", errno, strerror(errno));
 			else
@@ -136,12 +136,12 @@ int send(Atom &atom, int n, Comm &comm) {
 
 }
 
-void writeRemote(Atom &atom, int n, Comm &comm) {
+void writeRemote(Atom &atom, int n, Comm &comm, Dump &dump) {
 	
-	pack(atom, n, comm);
+	dump.pack(atom, n, comm);
 	if (comm.me == 0) 
-	send(atom, n, comm);
-	unpack(); //atom, n, comm);
+	send(atom, n, comm, dump);
+	dump.unpack(); //atom, n, comm);
 }
 
 void finiConnection() {

@@ -71,7 +71,7 @@ void Integrate::finalIntegrate()
 }
 
 void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
-                    Comm &comm, Thermo &thermo, Timer &timer)
+                    Comm &comm, Thermo &thermo, Timer &timer, Dump &dump)
 {
   int i, n;
 
@@ -205,8 +205,8 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
       finalIntegrate();
 	 
 //#ifdef DEBUG
-			writeFile(atom, n, comm);
-			//writeRemote(atom, n, comm);
+	  dump.writeFile(atom, n, comm);
+			//writeRemote(atom, n, comm, dump);
 //#endif
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);
 

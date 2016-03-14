@@ -36,6 +36,7 @@
 #include "thermo.h"
 #include "timer.h"
 #include "threadData.h"
+#include "dump.h"
 
 class Integrate
 {
@@ -54,7 +55,7 @@ class Integrate
     void setup();
     void initialIntegrate();
     void finalIntegrate();
-    void run(Atom &, Force*, Neighbor &, Comm &, Thermo &, Timer &);
+    void run(Atom &, Force*, Neighbor &, Comm &, Thermo &, Timer &, Dump &);
 
     ThreadData* threads;
 };
