@@ -13,6 +13,9 @@ class Dump
 	char *velfile; // = "velocities.txt";
 	FILE *dumpfp;
 
+	int output_frequency;
+	int num_steps;
+
 	int numAtoms;
 	int totalAtoms;
 	int bufsize;
@@ -24,11 +27,12 @@ class Dump
   public:
     Dump();
     ~Dump();
-	void dump(Atom &, int, Comm &);
-    void initDump(Comm &, int);
-	void pack(Atom &, int, Comm &);
-	void unpack(void);
+	int getFreq();
+    void initDump(Comm &, int, int);
 	void writeFile(Atom &, int, Comm &);
+	void pack(Atom &, int, Comm &);
+	void dump(Atom &, int, Comm &);
+	void unpack(void);
 	void finiDump(Comm &);
 
 	float *pos, *vel, *rtest;
@@ -36,8 +40,6 @@ class Dump
 };
 
 //extern float *pos, *vel;
-
-
 
 #endif
 

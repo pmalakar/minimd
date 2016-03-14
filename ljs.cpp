@@ -86,6 +86,8 @@ int main(int argc, char** argv)
   int ghost_newton = 1;
   int sort = -1;
   int ntypes = 4;
+	
+  int dump_frequency = 0;
 
   for(int i = 0; i < argc; i++) {
     if((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input_file") == 0)) {
@@ -211,8 +213,13 @@ int main(int argc, char** argv)
     }
 
     if((strcmp(argv[i], "-ip") == 0) || (strcmp(argv[i], "--ip_address") == 0)) {
-			if (ipaddress == NULL) ipaddress = new char[128];
+	  if (ipaddress == NULL) ipaddress = new char[128];
       strcpy(ipaddress, argv[++i]);
+      continue;
+    }
+
+    if((strcmp(argv[i], "-dfreq") == 0) || (strcmp(argv[i], "--dump_frequency") == 0)) {
+      dump_frequency = atoi(argv[++i]);
       continue;
     }
 
@@ -459,7 +466,7 @@ int main(int argc, char** argv)
 //#ifdef DEBUG
 	//if (me == 0) 
 	//	initConnection();
-  dump.initDump(comm, integrate.ntimes);	
+  dump.initDump(comm, integrate.ntimes, dump_frequency);	
 //#endif
 
   force->evflag = 1;

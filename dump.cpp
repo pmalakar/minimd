@@ -22,7 +22,7 @@ Dump::Dump(){
 
 Dump::~Dump() {}
 
-void Dump::initDump(Comm &comm, int ts) {
+void Dump::initDump(Comm &comm, int ts, int dfreq) {
 	
 	if (comm.me == 0) {
 		dumpfp = fopen (dumpfile, "w");
@@ -33,10 +33,19 @@ void Dump::initDump(Comm &comm, int ts) {
 		//printf("TESTING %d\n", PAD); PAD = 3
 	}
 
-//	printf("Num steps: %d\n", ts);
+	num_steps = ts;
+	output_frequency = dfreq;
+
+	if (output_frequency > ts)
+		perror("Output frequency cannot be > total number of time steps");
 
 	MPI_File_open (MPI_COMM_WORLD, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
 	MPI_File_open (MPI_COMM_WORLD, velfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &velfh);
+}
+
+int Dump::getFreq() {
+
+	return output_frequency;
 }
 
 void Dump::pack(Atom &atom, int n, Comm &comm) {
@@ -57,9 +66,15 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 
 	//  double t = MPI_Wtime();
 
+	//copy from simulation buffer
 	for(int i = 0; i < atom.nlocal ; i++) {
+
+		//positions
 		pos[i * PAD + 0] = atom.x[i * PAD + 0], pos[i * PAD + 1] = atom.x[i * PAD + 1], pos[i * PAD + 2] = atom.x[i * PAD + 2];
-		vel[i * PAD + 0] = atom.x[i * PAD + 0], vel[i * PAD + 1] = atom.x[i * PAD + 1], vel[i * PAD + 2] = atom.x[i * PAD + 2];
+		//velocities
+		vel[i * PAD + 0] = atom.v[i * PAD + 0], vel[i * PAD + 1] = atom.v[i * PAD + 1], vel[i * PAD + 2] = atom.v[i * PAD + 2];
+
+
 //    	fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
     	//if(dumpfp != NULL) {
 		//		ret = fprintf(dumpfp, "%d: %d: atom %d of %d positions %d %lf | %d %lf | %d %lf\n", comm.me, n, i, atom.nlocal, i * PAD + 0, atom.x[i * PAD + 0], i * PAD + 1, atom.x[i * PAD + 1], i * PAD + 2, atom.x[i * PAD + 2]);
