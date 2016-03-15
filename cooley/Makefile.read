@@ -1,0 +1,33 @@
+CC=mpicc
+
+#common
+CFLAGS=-g #-S #-O3
+
+DEFINES += -DBGQ -DCETUS #-DSTATS #-DDEBUG
+
+LIBHPM = -L/soft/perftools/hpctw/lib -lmpihpm 
+LIBBGPM = -L/bgsys/drivers/ppcfloor/bgpm/lib -lbgpm -lrt -lstdc++ 
+LIBUTILS =-L/projects/Performance/preeti/utils -lbgqutils
+LIBMPITRACE =-L/soft/perftools/hpctw/lib -lmpitrace
+LIBS += $(LIBUTILS) $(LIBBGPM) #$(LIBMPITRACE)
+#INC += -I/projects/Performance/preeti/utils	
+INC += -I./
+
+SRCS = read.cpp
+
+OBJS = 	$(SRCS:.cxx=.o)
+
+TARGET = read 
+
+all:    $(TARGET)
+		@echo Compilation done.
+
+%.o:%.cxx
+		$(CC) $(CFLAGS) -c $< -o $@ $(INC) # $(LIBS) $(DEFINES)
+
+$(TARGET): $(OBJS) 
+		$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(INC) # $(LIBS) $(DEFINES)   
+
+clean:
+		$(RM) *.o *~
+
