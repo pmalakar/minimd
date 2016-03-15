@@ -103,29 +103,35 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 	MPI_Status status;
 	double time;
 
-  	if (comm.me == 0) {
-    	MPI_File_get_size(posfh, &mpifo);
+// 	if (comm.me == 0) {
+//    	MPI_File_get_size(posfh, &mpifo);
 //    	MPI_File_get_size(velfh, &mpifo);
-	}
+//	}
+   	//MPI_Bcast(&mpifo, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-   	MPI_Bcast(&mpifo, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+	mpifo = n * 3 * totalAtoms * sizeof(float);
 	offset = mpifo;
-	mpifo += 3*numAtoms * sizeof(float);
+	mpifo += 3 * (numAtoms - atom.nlocal) * sizeof(float);
+
 	if (comm.me == 0) printf("%d: %d: Current offset %d %d\n", comm.me, n, mpifo, offset);
+	if (comm.me != 0 && n == 0) printf("%d: %d: Current offset %d %d\n", comm.me, n, mpifo, offset);
 
 	double t = MPI_Wtime();
+
 	//MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
 	//MPI_File_write_all(posfh, pos, 3*atom.nlocal, MPI_FLOAT, &status);
 	MPI_File_write_at_all(posfh, mpifo, pos, 3*atom.nlocal, MPI_FLOAT, &status);
+
 	//MPI_File_set_view(velfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
 	//MPI_File_write_all(velfh, vel, 3*atom.nlocal, MPI_FLOAT, &status);
 	MPI_File_write_at_all(velfh, mpifo, vel, 3*atom.nlocal, MPI_FLOAT, &status);
+	//if (status != MPI_SUCCESS) perror("Velocities write unsuccessful");
+
 	t = MPI_Wtime() - t;
-	//		if (status != MPI_SUCCESS) perror("Collective write unsuccessful");
 	MPI_Get_count (&status, MPI_FLOAT, &count);
 
 	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
 
 	if (comm.me == 0) {
 		printf("%d: %d: written %d floats (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
@@ -133,7 +139,7 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 		printf("%d: %d: written %d entries %f %f %f\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 	}
 
-	//#ifdef DEBUG
+//#ifdef DEBUG
 	if (n < 3 && comm.me < 4)	
 		for(int i = 0; i < atom.nlocal ; i++) 
 			printf("%d: %d: wrote %dth atom %f %f %f\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
@@ -147,11 +153,11 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 	//MPI_File_close(&posfh);
 	MPI_Get_count (&status, MPI_FLOAT, &rcount);
 	if (comm.me == 0) printf("%d: %d: have read %d floats\n", comm.me, n, rcount);
-#ifdef DEBUG
+//#ifdef DEBUG
 	if (n < 3 && comm.me < 4)
 		for(int i = 0; i < atom.nlocal ; i++) 
 			printf("%d: %d: read %dth atom %f %f %f\n", comm.me, n, i, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
-#endif
+//#endif
 
 }
 

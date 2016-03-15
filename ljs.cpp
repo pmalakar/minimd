@@ -87,7 +87,7 @@ int main(int argc, char** argv)
   int sort = -1;
   int ntypes = 4;
 	
-  int dump_frequency = 0;
+  int dump_frequency = 1;
 
   for(int i = 0; i < argc; i++) {
     if((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input_file") == 0)) {
