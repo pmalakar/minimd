@@ -33,7 +33,7 @@ void read() {
 
 	int n = 0;
 	MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDONLY, MPI_INFO_NULL, &posfh);
-	MPI_File_read_all(posfh, mpifo, pos, 3*atomPerProc, MPI_FLOAT, &status);
+	MPI_File_read_at_all(posfh, mpifo, pos, 3*atomPerProc, MPI_FLOAT, &status);
 	MPI_File_close(&posfh);
 
 	MPI_Get_count (&status, MPI_FLOAT, &rcount);
