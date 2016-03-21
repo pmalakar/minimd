@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <errno.h>
 #include <mpi.h>
 
@@ -60,9 +61,12 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 		rtest = (float *) malloc (3*bufsize * sizeof(float));
 //	}
 
+	//atom.nlocal - local number of atoms in the current rank
+	//totalAtoms - total number of atoms in the system
+	
 	MPI_Scan(&atom.nlocal, &numAtoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    printf("%d: %d: Mine %d Partial sum %d Total atoms %d\n", comm.me, n, atom.nlocal, numAtoms, totalAtoms); 
+  if(comm.me == 0) printf("%d: %d: Mine %d Partial sum %d Total atoms %d\n", comm.me, n, atom.nlocal, numAtoms, totalAtoms); 
 
 	//  double t = MPI_Wtime();
 
@@ -73,7 +77,6 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 		pos[i * PAD + 0] = atom.x[i * PAD + 0], pos[i * PAD + 1] = atom.x[i * PAD + 1], pos[i * PAD + 2] = atom.x[i * PAD + 2];
 		//velocities
 		vel[i * PAD + 0] = atom.v[i * PAD + 0], vel[i * PAD + 1] = atom.v[i * PAD + 1], vel[i * PAD + 2] = atom.v[i * PAD + 2];
-
 
 //    	fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
     	//if(dumpfp != NULL) {
@@ -99,7 +102,8 @@ void Dump::unpack(){
 
 void Dump::dump(Atom &atom, int n, Comm &comm) {
 
-	MPI_Offset offset;
+	//MPI_Offset offset;
+	int64_t offset;
 	MPI_Status status;
 	double time;
 
@@ -109,12 +113,15 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 //	}
    	//MPI_Bcast(&mpifo, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-	mpifo = n * 3 * totalAtoms * sizeof(float);
-	offset = mpifo;
-	mpifo += 3 * (numAtoms - atom.nlocal) * sizeof(float);
+//	mpifo = (int64_t)n * 3 * totalAtoms * sizeof(float);
+//	offset = mpifo;
+//	mpifo += (int64_t)3 * (numAtoms - atom.nlocal) * sizeof(float);
 
-	if (comm.me == 0) printf("%d: %d: Current offset %d %d\n", comm.me, n, mpifo, offset);
-	if (comm.me != 0 && n == 0) printf("%d: %d: Current offset %d %d\n", comm.me, n, mpifo, offset);
+	
+	mpifo = (int64_t) (3 * (n*totalAtoms + numAtoms - atom.nlocal) * sizeof(float));
+
+	if (comm.me == 0) printf("%d: %d: Current offset %lld %lld | %d %d %d\n", comm.me, n, mpifo, offset, totalAtoms, numAtoms, atom.nlocal);
+	if (comm.me != 0 && n < 3) printf("%d: %d: Current offset %lld %lld | %d %d %d\n", comm.me, n, mpifo, offset, totalAtoms, numAtoms, atom.nlocal);
 
 	double t = MPI_Wtime();
 
@@ -132,18 +139,17 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 
 	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-
 	if (comm.me == 0) {
 		printf("%d: %d: written %d floats (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
 		//printf("%d: %d: written %f %f %f\n", comm.me, n, atom.x[0], atom.x[1], atom.x[2]);
 		printf("%d: %d: written %d entries %f %f %f\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 	}
 
-//#ifdef DEBUG
+#ifdef DEBUG
 	if (n < 3 && comm.me < 4)	
 		for(int i = 0; i < atom.nlocal ; i++) 
 			printf("%d: %d: wrote %dth atom %f %f %f\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
-//#endif
+#endif
 
 //verify
 	//MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDONLY, MPI_INFO_NULL, &posfh);
@@ -153,11 +159,11 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 	//MPI_File_close(&posfh);
 	MPI_Get_count (&status, MPI_FLOAT, &rcount);
 	if (comm.me == 0) printf("%d: %d: have read %d floats\n", comm.me, n, rcount);
-//#ifdef DEBUG
+#ifdef DEBUG
 	if (n < 3 && comm.me < 4)
 		for(int i = 0; i < atom.nlocal ; i++) 
 			printf("%d: %d: read %dth atom %f %f %f\n", comm.me, n, i, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
-//#endif
+#endif
 
 }
 

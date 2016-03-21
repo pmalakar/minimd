@@ -1,6 +1,7 @@
 #ifndef DUMP_H_
 #define DUMP_H_
 
+#include <stdint.h>
 #include "mpi.h"
 #include "atom.h"
 #include "comm.h"
@@ -21,7 +22,7 @@ class Dump
 	int bufsize;
 	int count, rcount;
 
-	MPI_Offset mpifo;
+	int64_t mpifo;
 	MPI_File posfh, velfh;
 
   public:
