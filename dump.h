@@ -10,8 +10,8 @@ class Dump
 {
 
 	char *dumpfile; //[] = "dump.txt";
-	char *posfile; // = "positions.txt";
-	char *velfile; // = "velocities.txt";
+	char *posfile, *posfilename; // = "positions.txt";
+	char *velfile, *velfilename; // = "velocities.txt";
 	FILE *dumpfp;
 
 	int output_frequency;
@@ -29,7 +29,7 @@ class Dump
     Dump();
     ~Dump();
 	int getFreq();
-    void initDump(Comm &, int, int);
+  void initDump(Comm &, int, int, char *);
 	void writeFile(Atom &, int, Comm &);
 	void pack(Atom &, int, Comm &);
 	void dump(Atom &, int, Comm &);
@@ -37,6 +37,7 @@ class Dump
 	void finiDump(Comm &);
 
 	float *pos, *vel, *rtest;
+	char *dumpdir;
 	
 };
 

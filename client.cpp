@@ -15,7 +15,7 @@
 #include "client.h"
 #include "dump.h"
 
-char *ipaddress;
+char *ipaddress = NULL;
 
 int sockfd = 0, numbytes = 0;
 char recvBuff[1024];

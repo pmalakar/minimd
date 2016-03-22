@@ -12,19 +12,23 @@
 Dump::Dump(){
 
 	dumpfile = new char[10];
-	posfile = new char[20];
-	velfile = new char[20];
+	posfile = new char[256];
+	posfilename = new char[64];
+	velfile = new char[256];
+	velfilename = new char[64];
+
 	strcpy(dumpfile, "dump.txt");
-	strcpy(posfile, "positions.txt");
-	strcpy(velfile, "velocities.txt");
+	strcpy(posfilename, "positions.txt");
+	strcpy(velfilename, "velocities.txt");
 
 	bufsize = 0;
 }
 
 Dump::~Dump() {}
 
-void Dump::initDump(Comm &comm, int ts, int dfreq) {
+void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir) {
 	
+
 	if (comm.me == 0) {
 		dumpfp = fopen (dumpfile, "w");
  		if (dumpfp == NULL) {
@@ -36,6 +40,22 @@ void Dump::initDump(Comm &comm, int ts, int dfreq) {
 
 	num_steps = ts;
 	output_frequency = dfreq;
+
+	if (dumpdir != NULL) {
+		printf("%d %s\n",comm.me, dumpdir);
+		strcpy(posfile, dumpdir);
+		strcat(posfile, "/");
+		strcat(posfile, posfilename);
+		strcpy(velfile, dumpdir);
+		strcat(velfile, "/");
+		strcat(velfile, velfilename);
+	}
+	else {
+		strcpy(posfile, posfilename);
+		strcpy(velfile, velfilename);
+		printf("%s %s\n",posfilename, velfilename);
+	}
+	printf("%s %s\n",posfile, velfile);
 
 	if (output_frequency > ts)
 		perror("Output frequency cannot be > total number of time steps");

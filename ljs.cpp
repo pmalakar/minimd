@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   int ntypes = 4;
 	
   int dump_frequency = 1;
+	char *dumpdir = NULL;
 
   for(int i = 0; i < argc; i++) {
     if((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input_file") == 0)) {
@@ -220,6 +221,14 @@ int main(int argc, char** argv)
 
     if((strcmp(argv[i], "-dfreq") == 0) || (strcmp(argv[i], "--dump_frequency") == 0)) {
       dump_frequency = atoi(argv[++i]);
+      continue;
+    }
+
+    if((strcmp(argv[i], "-doutdir") == 0) || (strcmp(argv[i], "--dump_directory") == 0)) {
+			printf("arg[%d]=%s\n", i, argv[i]);
+	  	if (dumpdir == NULL) dumpdir = new char[256];
+			if (dumpdir != NULL) strcpy(dumpdir, argv[++i]);
+			else printf("whats wrong!\n");
       continue;
     }
 
@@ -466,7 +475,12 @@ int main(int argc, char** argv)
 //#ifdef DEBUG
 	//if (me == 0) 
 	//	initConnection();
-  dump.initDump(comm, integrate.ntimes, dump_frequency);	
+	if(dumpdir == NULL)
+		printf("dumpdir NULL\n");
+	else
+		printf("dumpdir not NULL %s\n", dumpdir);
+  dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir);	
+	//delete dumpdir;
 //#endif
 
   force->evflag = 1;
