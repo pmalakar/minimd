@@ -17,13 +17,16 @@ class Dump
 	int output_frequency;
 	int num_steps;
 
-	int numAtoms;
-	int totalAtoms;
+	long long int nlocal;
+	long long int numAtoms;
+	long long int totalAtoms;
 	int bufsize;
 	int count, rcount;
 
-	int64_t mpifo;
+	long long int mpifo;
 	MPI_File posfh, velfh;
+	
+	MPI_Datatype dtype;
 
   public:
     Dump();
@@ -36,12 +39,10 @@ class Dump
 	void unpack(void);
 	void finiDump(Comm &);
 
-	float *pos, *vel, *rtest;
+	MMD_float *pos, *vel, *rtest;
 	char *dumpdir;
 	
 };
-
-//extern float *pos, *vel;
 
 #endif
 

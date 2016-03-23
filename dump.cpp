@@ -36,7 +36,13 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir) {
 			exit(1);
 		}
 		//printf("TESTING %d\n", PAD); PAD = 3
+		printf("TESTING %d %d %d\n", sizeof(MPI_DOUBLE), sizeof(double), sizeof(MMD_float));
 	}
+
+	if (sizeof(MMD_float) == 4)
+		dtype = MPI_FLOAT;
+	else if (sizeof(MMD_float) == 8)
+		dtype = MPI_DOUBLE;
 
 	num_steps = ts;
 	output_frequency = dfreq;
@@ -72,31 +78,39 @@ int Dump::getFreq() {
 void Dump::pack(Atom &atom, int n, Comm &comm) {
  
 	int ret;
+	nlocal = atom.nlocal;
 
 //	if (!pos || bufsize < atom.nlocal) {
-		bufsize = atom.nlocal; // * 1.2 ;	
-		pos = (float *) malloc (3*bufsize * sizeof(float));
-		//pos = (float *) malloc (3*atom.nlocal * sizeof(float));
-		vel = (float *) malloc (3*bufsize * sizeof(float));
-		rtest = (float *) malloc (3*bufsize * sizeof(float));
+		bufsize = nlocal; // * 1.2 ;	
+		pos = (MMD_float *) malloc (3*bufsize * sizeof(MMD_float));
+		//pos = (MMD_float *) malloc (3*nlocal * sizeof(float));
+		vel = (MMD_float *) malloc (3*bufsize * sizeof(MMD_float));
+		rtest = (MMD_float *) malloc (3*bufsize * sizeof(MMD_float));
 //	}
 
-	//atom.nlocal - local number of atoms in the current rank
+	//nlocal - local number of atoms in the current rank
 	//totalAtoms - total number of atoms in the system
 	
-	MPI_Scan(&atom.nlocal, &numAtoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  if(comm.me == 0) printf("%d: %d: Mine %d Partial sum %d Total atoms %d\n", comm.me, n, atom.nlocal, numAtoms, totalAtoms); 
+	MPI_Scan(&nlocal, &numAtoms, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_LONG_LONG_INT, MPI_MAX, MPI_COMM_WORLD);
+  if(comm.me == 0 || (comm.me < 3 && n < 3)) 
+		printf("%d: %d: Mine %lld Partial sum %lld Total atoms %lld\n", comm.me, n, nlocal, numAtoms, totalAtoms); 
 
 	//  double t = MPI_Wtime();
 
 	//copy from simulation buffer
-	for(int i = 0; i < atom.nlocal ; i++) {
+	for(int i = 0; i < nlocal ; i++) {
 
 		//positions
 		pos[i * PAD + 0] = atom.x[i * PAD + 0], pos[i * PAD + 1] = atom.x[i * PAD + 1], pos[i * PAD + 2] = atom.x[i * PAD + 2];
 		//velocities
 		vel[i * PAD + 0] = atom.v[i * PAD + 0], vel[i * PAD + 1] = atom.v[i * PAD + 1], vel[i * PAD + 2] = atom.v[i * PAD + 2];
+
+		if(atom.v[i * PAD + 0]<-1000000 || atom.v[i * PAD + 1] < -1000000 || atom.v[i * PAD + 2] < -1000000)
+			printf("wrong vel %d: %d: %d of %d %f %f %f\n", comm.me, n, i, atom.nlocal, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]); 
+			
+		if(atom.x[i * PAD + 0]<-1000000 || atom.x[i * PAD + 1] < -1000000 || atom.x[i * PAD + 2] < -1000000)
+			printf("wrong %d: %d: %d of %d %f %f %f\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]); 
 
 //    	fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
     	//if(dumpfp != NULL) {
@@ -122,8 +136,6 @@ void Dump::unpack(){
 
 void Dump::dump(Atom &atom, int n, Comm &comm) {
 
-	//MPI_Offset offset;
-	int64_t offset;
 	MPI_Status status;
 	double time;
 
@@ -132,57 +144,46 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 //    	MPI_File_get_size(velfh, &mpifo);
 //	}
    	//MPI_Bcast(&mpifo, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-//	mpifo = (int64_t)n * 3 * totalAtoms * sizeof(float);
-//	offset = mpifo;
-//	mpifo += (int64_t)3 * (numAtoms - atom.nlocal) * sizeof(float);
-
 	
-	mpifo = (int64_t) (3 * (n*totalAtoms + numAtoms - atom.nlocal) * sizeof(float));
+	mpifo = 3 * (n*totalAtoms + numAtoms - nlocal) * sizeof(MMD_float);
 
-	if (comm.me == 0) printf("%d: %d: Current offset %lld %lld | %d %d %d\n", comm.me, n, mpifo, offset, totalAtoms, numAtoms, atom.nlocal);
-	if (comm.me != 0 && n < 3) printf("%d: %d: Current offset %lld %lld | %d %d %d\n", comm.me, n, mpifo, offset, totalAtoms, numAtoms, atom.nlocal);
+	if (comm.me == 0 || (comm.me != 0 && n < 3)) 
+		printf("%d: %d: Current offset %lld | %lld %lld %lld\n", comm.me, n, mpifo, totalAtoms, numAtoms, nlocal);
 
 	double t = MPI_Wtime();
 
 	//MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
 	//MPI_File_write_all(posfh, pos, 3*atom.nlocal, MPI_FLOAT, &status);
-	MPI_File_write_at_all(posfh, mpifo, pos, 3*atom.nlocal, MPI_FLOAT, &status);
 
-	//MPI_File_set_view(velfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
-	//MPI_File_write_all(velfh, vel, 3*atom.nlocal, MPI_FLOAT, &status);
-	MPI_File_write_at_all(velfh, mpifo, vel, 3*atom.nlocal, MPI_FLOAT, &status);
-	//if (status != MPI_SUCCESS) perror("Velocities write unsuccessful");
+	if (MPI_File_write_at_all(posfh, mpifo, pos, 3*nlocal, dtype, &status) != MPI_SUCCESS) 
+		perror("Positions write unsuccessful");
+	if (MPI_File_write_at_all(velfh, mpifo, vel, 3*nlocal, dtype, &status) != MPI_SUCCESS) 
+		perror("Velocities write unsuccessful");
 
 	t = MPI_Wtime() - t;
-	MPI_Get_count (&status, MPI_FLOAT, &count);
+	MPI_Get_count (&status, dtype, &count);
 
 	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
 	if (comm.me == 0) {
-		printf("%d: %d: written %d floats (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
-		//printf("%d: %d: written %f %f %f\n", comm.me, n, atom.x[0], atom.x[1], atom.x[2]);
-		printf("%d: %d: written %d entries %f %f %f\n", comm.me, n, count, pos[0], pos[1], pos[2]);
+		printf("%d: %d: written %d doubles (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
+		printf("%d: %d: written %d entries %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 	}
 
 #ifdef DEBUG
 	if (n < 3 && comm.me < 4)	
-		for(int i = 0; i < atom.nlocal ; i++) 
-			printf("%d: %d: wrote %dth atom %f %f %f\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
+		for(int i = 0; i < nlocal ; i++) 
+			printf("%d: %d: wrote %dth atom %lf %lf %lf\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
 #endif
 
 //verify
-	//MPI_File_open(MPI_COMM_WORLD, posfile, MPI_MODE_RDONLY, MPI_INFO_NULL, &posfh);
-	//MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
-	//MPI_File_read_all(posfh, rtest, 3*atom.nlocal, MPI_FLOAT, &status);
-	MPI_File_read_at_all(posfh, mpifo, rtest, 3*atom.nlocal, MPI_FLOAT, &status);
-	//MPI_File_close(&posfh);
-	MPI_Get_count (&status, MPI_FLOAT, &rcount);
-	if (comm.me == 0) printf("%d: %d: have read %d floats\n", comm.me, n, rcount);
+	MPI_File_read_at_all(posfh, mpifo, rtest, 3*nlocal, dtype, &status);
+	MPI_Get_count (&status, dtype, &rcount);
+	if (comm.me == 0) printf("%d: %d: have read %d doubles\n", comm.me, n, rcount);
 #ifdef DEBUG
 	if (n < 3 && comm.me < 4)
-		for(int i = 0; i < atom.nlocal ; i++) 
-			printf("%d: %d: read %dth atom %f %f %f\n", comm.me, n, i, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
+		for(int i = 0; i < nlocal ; i++) 
+			printf("%d: %d: read %dth atom %lf %lf %lf\n", comm.me, n, i, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
 #endif
 
 }
