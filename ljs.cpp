@@ -87,6 +87,7 @@ int main(int argc, char** argv)
   int sort = -1;
   int ntypes = 4;
 	
+  int num_sim_procs = 0;
   int dump_frequency = 1;
 	char *dumpdir = NULL;
 
@@ -219,13 +220,17 @@ int main(int argc, char** argv)
       continue;
     }
 
+    if((strcmp(argv[i], "-sc") == 0) || (strcmp(argv[i], "--sim_procs") == 0)) {
+      num_sim_procs = atoi(argv[++i]);
+      continue;
+    }
+
     if((strcmp(argv[i], "-dfreq") == 0) || (strcmp(argv[i], "--dump_frequency") == 0)) {
       dump_frequency = atoi(argv[++i]);
       continue;
     }
 
     if((strcmp(argv[i], "-doutdir") == 0) || (strcmp(argv[i], "--dump_directory") == 0)) {
-			printf("arg[%d]=%s\n", i, argv[i]);
 	  	if (dumpdir == NULL) dumpdir = new char[256];
 			if (dumpdir != NULL) strcpy(dumpdir, argv[++i]);
 			else printf("whats wrong!\n");
@@ -295,6 +300,16 @@ int main(int argc, char** argv)
   Dump dump;
 
   Force* force;
+
+	//Form sub-communicator 
+	if (num_sim_procs > 0) {
+		comm.num_sim_procs = num_sim_procs;
+		int color = 1;
+		if (me >= num_sim_procs)
+			color = 2;
+	
+		MPI_Comm_split(MPI_COMM_WORLD, color, me, &comm.subcomm);
+	}
 
   if(in.forcetype == FORCEEAM) {
     force = (Force*) new ForceEAM(ntypes);

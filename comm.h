@@ -32,6 +32,8 @@
 #ifndef COMM_H
 #define COMM_H
 
+#include <mpi.h>
+
 #include "atom.h"
 #include "threadData.h"
 #include "timer.h"
@@ -98,7 +100,8 @@ class Comm
     int maxnlocal;
     int nrecv_atoms;
 
-
+		int num_sim_procs;
+		MPI_Comm subcomm;
 };
 
 #endif

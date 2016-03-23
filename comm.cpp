@@ -51,6 +51,8 @@ Comm::Comm()
   do_safeexchange = 0;
   maxthreads = 0;
   maxnlocal = 0;
+
+	subcomm = MPI_COMM_WORLD;	
 }
 
 Comm::~Comm() {}

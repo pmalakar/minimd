@@ -81,9 +81,8 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 	nlocal = atom.nlocal;
 
 //	if (!pos || bufsize < atom.nlocal) {
-		bufsize = nlocal; // * 1.2 ;	
+		bufsize = nlocal; 
 		pos = (MMD_float *) malloc (3*bufsize * sizeof(MMD_float));
-		//pos = (MMD_float *) malloc (3*nlocal * sizeof(float));
 		vel = (MMD_float *) malloc (3*bufsize * sizeof(MMD_float));
 		rtest = (MMD_float *) malloc (3*bufsize * sizeof(MMD_float));
 //	}
@@ -106,22 +105,6 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 		//velocities
 		vel[i * PAD + 0] = atom.v[i * PAD + 0], vel[i * PAD + 1] = atom.v[i * PAD + 1], vel[i * PAD + 2] = atom.v[i * PAD + 2];
 
-		if(atom.v[i * PAD + 0]<-1000000 || atom.v[i * PAD + 1] < -1000000 || atom.v[i * PAD + 2] < -1000000)
-			printf("wrong vel %d: %d: %d of %d %f %f %f\n", comm.me, n, i, atom.nlocal, atom.v[i * PAD + 0], atom.v[i * PAD + 1], atom.v[i * PAD + 2]); 
-			
-		if(atom.x[i * PAD + 0]<-1000000 || atom.x[i * PAD + 1] < -1000000 || atom.x[i * PAD + 2] < -1000000)
-			printf("wrong %d: %d: %d of %d %f %f %f\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]); 
-
-//    	fprintf(dumpfp, "%d: %d: atom %d of %d positions %lf %lf %lf\n", comm.me, n, i, atom.nlocal, atom.x[i * PAD + 0], atom.x[i * PAD + 1], atom.x[i * PAD + 2]);
-    	//if(dumpfp != NULL) {
-		//		ret = fprintf(dumpfp, "%d: %d: atom %d of %d positions %d %lf | %d %lf | %d %lf\n", comm.me, n, i, atom.nlocal, i * PAD + 0, atom.x[i * PAD + 0], i * PAD + 1, atom.x[i * PAD + 1], i * PAD + 2, atom.x[i * PAD + 2]);
-		//		if (ret < 0) {
-		//			printf("fprintf error %d %s\n", errno, strerror(errno));
-		//			if (ferror (dumpfp))
-      	//			printf ("Error Writing to dump.txt\n");
-		//		}
-//    	fprintf(dumpfp, "%d: %d: atom %d of %d velocities %d %lf | %d %lf | %d %lf\n", comm.me, n, i, atom.nlocal, i * PAD + 0, atom.v[i * PAD + 0], i * PAD + 1, atom.v[i * PAD + 1], i * PAD + 2, atom.v[i * PAD + 2]);
-		//	}
 	}
 
 	//  t = MPI_Wtime() - t;
@@ -165,9 +148,10 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 
 	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-	if (comm.me == 0) {
+	if (comm.me == 0 && n<5) {
 		printf("%d: %d: written %d doubles (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
 		printf("%d: %d: written %d entries %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
+		printf("%d: %d: written %d velocities %lf %lf %lf\n", comm.me, n, count, vel[0], vel[1], vel[2]);
 	}
 
 #ifdef DEBUG
@@ -177,11 +161,12 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 #endif
 
 //verify
-	MPI_File_read_at_all(posfh, mpifo, rtest, 3*nlocal, dtype, &status);
+	MPI_File_read_at_all(velfh, mpifo, rtest, 3*nlocal, dtype, &status);
 	MPI_Get_count (&status, dtype, &rcount);
 	if (comm.me == 0) printf("%d: %d: have read %d doubles\n", comm.me, n, rcount);
+
 #ifdef DEBUG
-	if (n < 3 && comm.me < 4)
+	if (n < 3 && comm.me < 3)
 		for(int i = 0; i < nlocal ; i++) 
 			printf("%d: %d: read %dth atom %lf %lf %lf\n", comm.me, n, i, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
 #endif
