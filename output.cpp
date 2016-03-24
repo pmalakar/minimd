@@ -54,15 +54,15 @@ void output(In &in, Atom &atom, Force* force, Neighbor &neighbor, Comm &comm,
   double tmp, ave, max, min, total;
   FILE* fp;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &me);
-  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_rank(comm.subcomm, &me);
+  MPI_Comm_size(comm.subcomm, &nprocs);
 
   /* enforce PBC, then check for lost atoms */
 
   atom.pbc();
 
   int natoms;
-  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, comm.subcomm);
 
   int nlost = 0;
 
