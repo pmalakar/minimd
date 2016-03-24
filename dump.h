@@ -20,10 +20,10 @@ class Dump
 	long long int nlocal;
 	long long int numAtoms;
 	long long int totalAtoms;
-	int bufsize;
+	long long int bufsize;
 	int count, rcount;
 
-	long long int mpifo;
+	MPI_Offset mpifo;
 	MPI_File posfh, velfh;
 	
 	MPI_Datatype dtype;

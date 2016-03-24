@@ -35,8 +35,18 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir) {
 			printf("File open error %d %s\n", errno, strerror(errno));
 			exit(1);
 		}
+		
 		//printf("TESTING %d\n", PAD); PAD = 3
-		printf("TESTING %d %d %d\n", sizeof(MPI_DOUBLE), sizeof(double), sizeof(MMD_float));
+		 int size;
+		 MPI_Type_size(MPI_INT, &size);
+		 printf("TESTING %d %d %d\n", size, sizeof(double), sizeof(MMD_float));
+		 MPI_Type_size(MPI_DOUBLE, &size);
+		 printf("TESTING %d %d %d\n", size, sizeof(double), sizeof(MMD_float));
+		 MPI_Type_size(MPI_FLOAT, &size);
+		 printf("TESTING %d %d %d\n", size);
+		 MPI_Type_size(MPI_LONG_DOUBLE, &size);
+		 printf("TESTING %d %d %d\n", size); 
+
 	}
 
 	if (sizeof(MMD_float) == 4)
@@ -148,9 +158,9 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 
 	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-	if (comm.me == 0 && n<5) {
+	if (comm.me == 0 && n<9) {
 		printf("%d: %d: written %d doubles (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
-		printf("%d: %d: written %d entries %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
+		printf("%d: %d: written %d positions %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 		printf("%d: %d: written %d velocities %lf %lf %lf\n", comm.me, n, count, vel[0], vel[1], vel[2]);
 	}
 

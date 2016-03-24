@@ -877,14 +877,14 @@ void ForceEAM::communicate(Atom &atom, Comm &comm)
     if(comm.sendproc[iswap] != me) {
       if(sizeof(MMD_float) == 4) {
         MPI_Irecv(comm.buf_recv, comm.comm_recv_size[iswap], MPI_FLOAT,
-                  comm.recvproc[iswap], 0, MPI_COMM_WORLD, &request);
+                  comm.recvproc[iswap], 0, comm.subcomm, &request);
         MPI_Send(comm.buf_send, comm.comm_send_size[iswap], MPI_FLOAT,
-                 comm.sendproc[iswap], 0, MPI_COMM_WORLD);
+                 comm.sendproc[iswap], 0, comm.subcomm);
       } else {
         MPI_Irecv(comm.buf_recv, comm.comm_recv_size[iswap], MPI_DOUBLE,
-                  comm.recvproc[iswap], 0, MPI_COMM_WORLD, &request);
+                  comm.recvproc[iswap], 0, comm.subcomm, &request);
         MPI_Send(comm.buf_send, comm.comm_send_size[iswap], MPI_DOUBLE,
-                 comm.sendproc[iswap], 0, MPI_COMM_WORLD);
+                 comm.sendproc[iswap], 0, comm.subcomm);
       }
 
       MPI_Wait(&request, &status);
