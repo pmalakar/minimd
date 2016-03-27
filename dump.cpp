@@ -13,41 +13,47 @@ Dump::Dump(){
 
 	dumpfile = new char[10];
 	posfile = new char[256];
-	posfilename = new char[64];
+	posfilename = new char[FILENAMELEN];
 	velfile = new char[256];
-	velfilename = new char[64];
+	velfilename = new char[FILENAMELEN];
 
-	strcpy(dumpfile, "dump.txt");
-	strcpy(posfilename, "positions.txt");
-	strcpy(velfilename, "velocities.txt");
+	//strcpy(dumpfile, "dump.txt");
+	strcpy(posfilename, "pos.txt");
+	strcpy(velfilename, "vel.txt");
 
 	bufsize = 0;
+	num_steps = 0;
+	output_frequency = 0;
+
+	//dumpfp = NULL;
+	afreq = NULL;
+	afname = NULL;
+
+	time_to_write = NULL;
+
+	printf("TESTING %u %u\n", sizeof(long long int), sizeof(MPI_Offset));	//8
+
 }
 
 Dump::~Dump() {}
 
-void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir) {
-	
+void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir, char *analysiscfg) 
+{
 
+/*
 	if (comm.me == 0) {
 		dumpfp = fopen (dumpfile, "w");
  		if (dumpfp == NULL) {
 			printf("File open error %d %s\n", errno, strerror(errno));
 			exit(1);
 		}
-		
-		//printf("TESTING %d\n", PAD); PAD = 3
-		 int size;
-		 MPI_Type_size(MPI_INT, &size);
-		 printf("TESTING %d %d %d\n", size, sizeof(double), sizeof(MMD_float));
-		 MPI_Type_size(MPI_DOUBLE, &size);
-		 printf("TESTING %d %d %d\n", size, sizeof(double), sizeof(MMD_float));
-		 MPI_Type_size(MPI_FLOAT, &size);
-		 printf("TESTING %d %d %d\n", size);
-		 MPI_Type_size(MPI_LONG_DOUBLE, &size);
-		 printf("TESTING %d %d %d\n", size); 
-
 	}
+*/
+
+	int size;
+	MPI_Type_size(MPI_DOUBLE, &size);
+	if (size != sizeof(MMD_float))
+		perror("dump: Size mismatch");
 
 	if (sizeof(MMD_float) == 4)
 		dtype = MPI_FLOAT;
@@ -71,13 +77,23 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir) {
 		strcpy(velfile, velfilename);
 		printf("%s %s\n",posfilename, velfilename);
 	}
-	printf("%s %s\n",posfile, velfile);
+#ifdef DEBUG
+	if(comm.me == 0) printf("Positions file %s\nVelocities file %s\n", posfile, velfile);
+#endif
 
-	if (output_frequency > ts)
+	//bound check
+	if (output_frequency > num_steps)
 		perror("Output frequency cannot be > total number of time steps");
 
 	MPI_File_open (MPI_COMM_WORLD, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
 	MPI_File_open (MPI_COMM_WORLD, velfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &velfh);
+
+	time_to_write = (double *) malloc(num_steps * sizeof(double));
+
+	//if analysis config file exists	
+	if(analysiscfg != NULL)
+		initAnalysisDump(comm, analysiscfg);
+
 }
 
 int Dump::getFreq() {
@@ -132,17 +148,12 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 	MPI_Status status;
 	double time;
 
-// 	if (comm.me == 0) {
-//    	MPI_File_get_size(posfh, &mpifo);
-//    	MPI_File_get_size(velfh, &mpifo);
-//	}
-   	//MPI_Bcast(&mpifo, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	
 	mpifo = 3 * (n*totalAtoms + numAtoms - nlocal) * sizeof(MMD_float);
 
+#ifdef DEBUG
 	if (comm.me == 0 || (comm.me != 0 && n < 3)) 
 		printf("%d: %d: Current offset %lld | %lld %lld %lld\n", comm.me, n, mpifo, totalAtoms, numAtoms, nlocal);
-
+#endif
 	double t = MPI_Wtime();
 
 	//MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
@@ -154,14 +165,17 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 		perror("Velocities write unsuccessful");
 
 	t = MPI_Wtime() - t;
+	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	MPI_Get_count (&status, dtype, &count);
 
-	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	time_to_write[n] = time;
 
-	if (comm.me == 0 && n<21) {
-		printf("%d: %d: written %d doubles (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
+	if (comm.me == 0 && n<10) {
+		printf("%d: %d: written %d doubles (offset %lld) in %4.2lf s\n", comm.me, n, count, mpifo, time);
+#ifdef DEBUG
 		printf("%d: %d: written %d positions %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 		printf("%d: %d: written %d velocities %lf %lf %lf\n", comm.me, n, count, vel[0], vel[1], vel[2]);
+#endif
 	}
 
 #ifdef DEBUG
@@ -170,12 +184,12 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 			printf("%d: %d: wrote %dth atom %lf %lf %lf\n", comm.me, n, i, pos[i*PAD+0], pos[i*PAD+1], pos[i*PAD+2]);
 #endif
 
+#ifdef DEBUG
 //verify
 	MPI_File_read_at_all(velfh, mpifo, rtest, 3*nlocal, dtype, &status);
 	MPI_Get_count (&status, dtype, &rcount);
 	if (comm.me == 0) printf("%d: %d: have read %d doubles\n", comm.me, n, rcount);
 
-#ifdef DEBUG
 	if (n < 3 && comm.me < 3)
 		for(int i = 0; i < nlocal ; i++) 
 			printf("%d: %d: read %dth atom %lf %lf %lf\n", comm.me, n, i, rtest[i*PAD+0], rtest[i*PAD+1], rtest[i*PAD+2]);
@@ -196,8 +210,8 @@ void Dump::finiDump(Comm &comm) {
 	if (pos)
 		delete pos, vel, rtest;
 
-	if (comm.me == 0) 
-		fclose(dumpfp);
+	//if (comm.me == 0) 
+		//fclose(dumpfp);
 
 	MPI_File_close(&posfh);
 	MPI_File_close(&velfh);

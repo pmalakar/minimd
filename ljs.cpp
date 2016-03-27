@@ -90,6 +90,7 @@ int main(int argc, char** argv)
   int num_sim_procs = 0;
   int dump_frequency = 1;
 	char *dumpdir = NULL;
+	char *analysiscfg = NULL;
 
   for(int i = 0; i < argc; i++) {
     if((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input_file") == 0)) {
@@ -233,6 +234,13 @@ int main(int argc, char** argv)
     if((strcmp(argv[i], "-doutdir") == 0) || (strcmp(argv[i], "--dump_directory") == 0)) {
 	  	if (dumpdir == NULL) dumpdir = new char[256];
 			if (dumpdir != NULL) strcpy(dumpdir, argv[++i]);
+			else printf("whats wrong!\n");
+      continue;
+    }
+
+    if((strcmp(argv[i], "-acfg") == 0) || (strcmp(argv[i], "--analysis_config_file") == 0)) {
+	  	if (analysiscfg == NULL) analysiscfg = new char[256];
+			if (analysiscfg != NULL) strcpy(analysiscfg, argv[++i]);
 			else printf("whats wrong!\n");
       continue;
     }
@@ -488,14 +496,17 @@ int main(int argc, char** argv)
   comm.borders(atom);
 
 //#ifdef DEBUG
+
 	//if (me == 0) 
 	//	initConnection();
 	if(dumpdir == NULL)
 		printf("dumpdir NULL\n");
 	else
 		printf("dumpdir not NULL %s\n", dumpdir);
-  dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir);	
-	//delete dumpdir;
+  dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir, analysiscfg);	
+	delete dumpdir;
+	delete analysiscfg;
+
 //#endif
 
   force->evflag = 1;
