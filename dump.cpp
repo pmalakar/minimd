@@ -158,7 +158,7 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 
 	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-	if (comm.me == 0 && n<9) {
+	if (comm.me == 0 && n<21) {
 		printf("%d: %d: written %d doubles (offset %d) in %4.2lf s\n", comm.me, n, count, mpifo, time);
 		printf("%d: %d: written %d positions %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 		printf("%d: %d: written %d velocities %lf %lf %lf\n", comm.me, n, count, vel[0], vel[1], vel[2]);
