@@ -28,6 +28,7 @@ Dump::Dump(){
 	//dumpfp = NULL;
 	afreq = NULL;
 	afname = NULL;
+	afh = NULL;
 
 	time_to_write = NULL;
 
@@ -116,8 +117,11 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 	
 	MPI_Scan(&nlocal, &numAtoms, 1, MPI_LONG_LONG_INT, MPI_SUM, comm.subcomm);
 	MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_LONG_LONG_INT, MPI_MAX, comm.subcomm);
+
+#ifdef DEBUG
   if(comm.me == 0 || (comm.me < 3 && n < 3)) 
 		printf("%d: %d: Mine %lld Partial sum %lld Total atoms %lld\n", comm.me, n, nlocal, numAtoms, totalAtoms); 
+#endif
 
 	//  double t = MPI_Wtime();
 
@@ -168,13 +172,13 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 
 	time_to_write[n] = time;
 
+#ifdef DEBUG
 	if (comm.me == 0 && n<10) {
 		printf("%d: %d: written %d doubles (offset %lld) in %4.2lf s\n", comm.me, n, count, mpifo, time);
-#ifdef DEBUG
 		printf("%d: %d: written %d positions %lf %lf %lf\n", comm.me, n, count, pos[0], pos[1], pos[2]);
 		printf("%d: %d: written %d velocities %lf %lf %lf\n", comm.me, n, count, vel[0], vel[1], vel[2]);
-#endif
 	}
+#endif
 
 #ifdef DEBUG
 	if (n < 3 && comm.me < 4)	
@@ -214,6 +218,11 @@ void Dump::finiDump(Comm &comm) {
 	MPI_File_close(&posfh);
 	MPI_File_close(&velfh);
 
-}
+	if (anum>0)	finiAnalysisDump();
 
+	if (comm.me == 0)
+	 for (int i=0; i<num_steps; i++)
+		printf("Time to write %d %lf\n", i, time_to_write[i]);
+
+}
 

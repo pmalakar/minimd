@@ -10,7 +10,7 @@
 
 void Dump::initAnalysisDump(Comm &comm, char *configFile){
 
-	int i;
+	int i, retval;
 
 	if (num_steps == 0)
 		perror("initAnalysisDump: error in initializing");
@@ -49,13 +49,27 @@ void Dump::initAnalysisDump(Comm &comm, char *configFile){
 	if(afreq == NULL) aalloc(anum);
 
 	//open files
+	afh = (MPI_File *) malloc(anum * sizeof(MPI_File)); 
+	for (i=0; i<anum; i++)
+		retval = MPI_File_open (comm.subcomm, afname[i], MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &afh[i]);
+
+	if (retval != MPI_SUCCESS) 
+		printf("\nAnalysis dump file open error %d %s\n", errno, strerror(errno));
 
 }
 
-void Dump::finiAnalysisDump(Comm &comm) {
+void Dump::finiAnalysisDump() {
 
-	//cleanup
-	//close files
+	//close files. cleanup.
+	for (int i=0; i<anum; i++) {
+		delete afname[i];
+		MPI_File_close (&afh[i]);
+	}
+
+	delete afname;
+	delete afreq, afh;
+
+	free(afh);
 
 }
 

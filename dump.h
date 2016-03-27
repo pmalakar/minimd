@@ -34,6 +34,8 @@ class Dump
 	int *afreq;
 	char **afname;
 
+	MPI_File *afh;
+
 	double *time_to_write;
 
   public:
@@ -50,7 +52,7 @@ class Dump
 	void finiDump(Comm &);
 
 	void initAnalysisDump(Comm &, char *);
-	void finiAnalysisDump(Comm &);
+	void finiAnalysisDump();
 	void aalloc(int);
 
 	MMD_float *pos, *vel, *rtest;
