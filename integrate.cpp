@@ -207,6 +207,11 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
 //#ifdef DEBUG
 	  if (n % dump.getFreq() == 0)
 	   dump.writeFile(atom, n, comm);
+
+		for(int j=0; j<dump.anum; j++)
+			if(n % dump.afreq[j] == 0)
+	   		dump.writeAOutput(atom, comm, n, j);
+
 	  //writeRemote(atom, n, comm, dump);
 //#endif
       if(thermo.nstat) thermo.compute(n + 1, atom, neighbor, force, timer, comm);

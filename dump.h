@@ -30,11 +30,9 @@ class Dump
 	
 	MPI_Datatype dtype;
 
-	int anum;
-	int *afreq;
-	char **afname;
-
 	MPI_File *afh;
+	MMD_float *array; 
+	int arraylen;
 
 	double *time_to_write;
 
@@ -54,10 +52,19 @@ class Dump
 	void initAnalysisDump(Comm &, char *);
 	void finiAnalysisDump();
 	void aalloc(int);
+	
+	void apack(Atom &, Comm &, int, int);
+	void adump(Atom &, Comm &, int, int);
+	void aunpack();
+	void writeAOutput(Atom &, Comm &, int, int);
 
 	MMD_float *pos, *vel, *rtest;
 	char *dumpdir;
 	
+	int anum;
+	int *afreq;
+	char *afname;
+
 };
 
 #endif

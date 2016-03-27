@@ -501,11 +501,11 @@ int main(int argc, char** argv)
 	//	initConnection();
 	if(dumpdir == NULL)
 		printf("dumpdir NULL\n");
-	else
-		printf("dumpdir not NULL %s\n", dumpdir);
-  dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir, analysiscfg);	
-	delete dumpdir;
-	delete analysiscfg;
+	else 
+	  dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir, analysiscfg);	
+
+	if (dumpdir != NULL) delete dumpdir;
+	if (analysiscfg != NULL) delete analysiscfg;
 
 //#endif
 

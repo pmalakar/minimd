@@ -32,7 +32,7 @@ Dump::Dump(){
 
 	time_to_write = NULL;
 
-	printf("TESTING %u %u\n", sizeof(long long int), sizeof(MPI_Offset));	//8
+	//printf("TESTING %u %u\n", sizeof(long long int), sizeof(MPI_Offset));	//8 8
 
 }
 
