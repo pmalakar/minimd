@@ -64,7 +64,6 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir, char *analysis
 	output_frequency = dfreq;
 
 	if (dumpdir != NULL) {
-		printf("%d %s\n",comm.me, dumpdir);
 		strcpy(posfile, dumpdir);
 		strcat(posfile, "/");
 		strcat(posfile, posfilename);
@@ -75,7 +74,6 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir, char *analysis
 	else {
 		strcpy(posfile, posfilename);
 		strcpy(velfile, velfilename);
-		printf("%s %s\n",posfilename, velfilename);
 	}
 #ifdef DEBUG
 	if(comm.me == 0) printf("Positions file %s\nVelocities file %s\n", posfile, velfile);
@@ -85,8 +83,8 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir, char *analysis
 	if (output_frequency > num_steps)
 		perror("Output frequency cannot be > total number of time steps");
 
-	MPI_File_open (MPI_COMM_WORLD, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
-	MPI_File_open (MPI_COMM_WORLD, velfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &velfh);
+	MPI_File_open (comm.subcomm, posfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &posfh);
+	MPI_File_open (comm.subcomm, velfile, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &velfh);
 
 	time_to_write = (double *) malloc(num_steps * sizeof(double));
 
@@ -116,8 +114,8 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 	//nlocal - local number of atoms in the current rank
 	//totalAtoms - total number of atoms in the system
 	
-	MPI_Scan(&nlocal, &numAtoms, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_LONG_LONG_INT, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Scan(&nlocal, &numAtoms, 1, MPI_LONG_LONG_INT, MPI_SUM, comm.subcomm);
+	MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_LONG_LONG_INT, MPI_MAX, comm.subcomm);
   if(comm.me == 0 || (comm.me < 3 && n < 3)) 
 		printf("%d: %d: Mine %lld Partial sum %lld Total atoms %lld\n", comm.me, n, nlocal, numAtoms, totalAtoms); 
 
@@ -134,7 +132,7 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 	}
 
 	//  t = MPI_Wtime() - t;
-	//  MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	//  MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, comm.subcomm);
 
 }
 
@@ -165,7 +163,7 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 		perror("Velocities write unsuccessful");
 
 	t = MPI_Wtime() - t;
-	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Allreduce (&t, &time, 1, MPI_DOUBLE, MPI_MAX, comm.subcomm);
 	MPI_Get_count (&status, dtype, &count);
 
 	time_to_write[n] = time;

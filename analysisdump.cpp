@@ -26,18 +26,16 @@ void Dump::initAnalysisDump(Comm &comm, char *configFile){
 		}	
 		
 		fscanf(fp, "%d", &anum);
-		afreq = new int[anum];
-		afname = new char*[anum];
-		for (int j=0; j<anum; j++)
-			afname[j] = new char[FILENAMELEN];
+		aalloc(anum);
 
-		i = -1;
-		while(!feof(fp)) {
-			fscanf(fp, "%d %s", &afreq[++i], afname[i]);
+		i = 0;
+		while(i<anum) {
+			fscanf(fp, "%d %s", &afreq[i], afname[i]);
+			++i;
 		}
 	
-		if (i+1 != anum) {
-			printf("Config file mistmatch %d %s\n", anum, i);
+		if (i != anum) {
+			printf("Config file mistmatch %d %d\n", anum, i);
 			exit(1);
 		}
 
@@ -47,6 +45,8 @@ void Dump::initAnalysisDump(Comm &comm, char *configFile){
 		fclose(fp);
 	}
 
+	MPI_Bcast(&anum, 1, MPI_INT, 0, comm.subcomm);
+	if(afreq == NULL) aalloc(anum);
 
 	//open files
 
@@ -57,4 +57,12 @@ void Dump::finiAnalysisDump(Comm &comm) {
 	//cleanup
 	//close files
 
+}
+
+void Dump::aalloc(int anum)
+{
+		afreq = new int[anum];
+		afname = new char*[anum];
+		for (int j=0; j<anum; j++)
+			afname[j] = new char[FILENAMELEN];
 }

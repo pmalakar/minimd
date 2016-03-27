@@ -51,6 +51,7 @@ class Dump
 
 	void initAnalysisDump(Comm &, char *);
 	void finiAnalysisDump(Comm &);
+	void aalloc(int);
 
 	MMD_float *pos, *vel, *rtest;
 	char *dumpdir;
