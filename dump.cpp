@@ -26,9 +26,15 @@ Dump::Dump(){
 	output_frequency = 0;
 
 	//dumpfp = NULL;
+	adim = NULL;
+	atevery = NULL;
+	atsteps = NULL;
+	acurrstep = NULL;
 	afreq = NULL;
 	afname = NULL;
 	afh = NULL;
+
+	configFile = NULL;
 
 	time_to_write = NULL;
 
@@ -93,6 +99,9 @@ void Dump::initDump(Comm &comm, int ts, int dfreq, char *dumpdir, char *analysis
 	if(analysiscfg != NULL)
 		initAnalysisDump(comm, analysiscfg);
 
+	for (int i=0; i<num_steps; i++)
+		time_to_write[i] = 0;
+
 }
 
 int Dump::getFreq() {
@@ -156,6 +165,7 @@ void Dump::dump(Atom &atom, int n, Comm &comm) {
 	if (comm.me == 0 || (comm.me != 0 && n < 3)) 
 		printf("%d: %d: Current offset %lld | %lld %lld %lld\n", comm.me, n, mpifo, totalAtoms, numAtoms, nlocal);
 #endif
+
 	double t = MPI_Wtime();
 
 	//MPI_File_set_view(posfh, mpifo, MPI_FLOAT, MPI_FLOAT, "native", MPI_INFO_NULL);
@@ -209,8 +219,8 @@ void Dump::writeFile(Atom &atom, int n, Comm &comm) {
 
 void Dump::finiDump(Comm &comm) {
 
-	if (pos)
-		delete pos, vel, rtest;
+	//if (pos)
+	//	delete pos, vel, rtest;
 
 	//if (comm.me == 0) 
 		//fclose(dumpfp);

@@ -499,10 +499,7 @@ int main(int argc, char** argv)
 
 	//if (me == 0) 
 	//	initConnection();
-	if(dumpdir == NULL)
-		printf("dumpdir NULL\n");
-	else 
-	  dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir, analysiscfg);	
+	dump.initDump(comm, integrate.ntimes, dump_frequency, dumpdir, analysiscfg);	
 
 	if (dumpdir != NULL) delete dumpdir;
 	if (analysiscfg != NULL) delete analysiscfg;
@@ -562,11 +559,9 @@ int main(int argc, char** argv)
   if(yaml_output)
     output(in, atom, force, neighbor, comm, thermo, integrate, timer, screen_yaml);
 
-#ifdef DEBUG
 	//if (me == 0) 
 		//finiConnection();
 	dump.finiDump(comm);
-#endif
 
   delete force;
   MPI_Barrier(MPI_COMM_WORLD);

@@ -6,6 +6,7 @@
 #include "atom.h"
 #include "comm.h"
 
+#define ANAMELEN 16
 #define FILENAMELEN 64
 
 class Dump 
@@ -34,6 +35,15 @@ class Dump
 	MMD_float *array; 
 	int arraylen;
 
+	char *configFile;
+
+	int *adim;
+	int *atevery;
+	int *atsteps;
+	int *acurrstep;
+	char *afname;
+	char *aname;
+
 	double *time_to_write;
 
   public:
@@ -56,14 +66,14 @@ class Dump
 	void apack(Atom &, Comm &, int, int);
 	void adump(Atom &, Comm &, int, int);
 	void aunpack();
+	void updateConfig(Comm &);
 	void writeAOutput(Atom &, Comm &, int, int);
 
 	MMD_float *pos, *vel, *rtest;
-	char *dumpdir;
+	//char *dumpdir;
 	
 	int anum;
 	int *afreq;
-	char *afname;
 
 };
 

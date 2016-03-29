@@ -205,8 +205,8 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
       finalIntegrate();
 	 
 //#ifdef DEBUG
-	  if (n % dump.getFreq() == 0)
-	   dump.writeFile(atom, n, comm);
+	 // if (n % dump.getFreq() == 0)
+	 //  dump.writeFile(atom, n, comm);
 
 		for(int j=0; j<dump.anum; j++)
 			if(n % dump.afreq[j] == 0)
