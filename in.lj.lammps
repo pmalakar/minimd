@@ -1,4 +1,5 @@
 #Lennard Jones inpute file for LAMMPS 
+
 units lj
 
 variable 	s index 32

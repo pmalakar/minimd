@@ -90,10 +90,13 @@ void Dump::apack(Atom &atom, Comm &comm, int n, int aindex) {
 	nlocal = atom.nlocal;
 	bufsize = nlocal;
 
+	/*
 	if (aindex < 2)
 		arraylen = 3 * bufsize;
 	else
-		arraylen = bufsize;
+		arraylen = bufsize;*/
+
+	arraylen = adim[aindex] * nlocal;
 	array = (MMD_float *) malloc (arraylen * sizeof(MMD_float));
 	if (array == NULL)
 		printf("Error: Memory allocation failed");
@@ -101,6 +104,7 @@ void Dump::apack(Atom &atom, Comm &comm, int n, int aindex) {
 	MPI_Scan(&nlocal, &numAtoms, 1, MPI_LONG_LONG_INT, MPI_SUM, comm.subcomm);
   MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_LONG_LONG_INT, MPI_MAX, comm.subcomm);
 
+//fix
   for(int i = 0; i < nlocal ; i++) {
 		if (aindex == 0)
     	array[i * PAD + 0] = atom.x[i * PAD + 0], array[i * PAD + 1] = atom.x[i * PAD + 1], array[i * PAD + 2] = atom.x[i * PAD + 2]; 
@@ -117,13 +121,14 @@ void Dump::apack(Atom &atom, Comm &comm, int n, int aindex) {
 void Dump::adump(Atom &atom, Comm &comm, int n, int aindex) {
 
 	MPI_Status status;
-	int multiplier;
+	//int multiplier;
   double time;
 
-	if (aindex < 2)	multiplier = 3;
-	else multiplier = 1;
+	//if (aindex < 2)	multiplier = 3;
+	//else multiplier = 1;
 
-  mpifo = multiplier * (n*totalAtoms + numAtoms - nlocal) * sizeof(MMD_float);
+  mpifo = adim[aindex] * (n*totalAtoms + numAtoms - nlocal) * sizeof(MMD_float);
+	if (comm.me < 2) printf("%d: test %lld %lld %lld %lld\n", comm.me, nlocal, numAtoms, totalAtoms, arraylen);
 
   double t = MPI_Wtime();
 

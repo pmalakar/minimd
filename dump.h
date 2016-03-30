@@ -33,7 +33,7 @@ class Dump
 
 	MPI_File *afh;
 	MMD_float *array; 
-	int arraylen;
+	long long int arraylen;
 
 	char *configFile;
 
