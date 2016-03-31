@@ -60,7 +60,7 @@ class Comm
     int* pbc_flagx;                   // PBC correction in x for this swap
     int* pbc_flagy;                   // same in y
     int* pbc_flagz;                   // same in z
-    int* sendnum, *recvnum;           // # of atoms to send/recv in each swap
+    MMD_int* sendnum, *recvnum;           // # of atoms to send/recv in each swap
     int* comm_send_size;              // # of values to send in each comm
     int* comm_recv_size;              // # of values to recv in each comm
     int* reverse_send_size;           // # of values to send in each reverse
@@ -69,7 +69,7 @@ class Comm
     int* sendproc_exc, *recvproc_exc; // proc to send/recv with at each swap for safe exchange
 
     int* firstrecv;                   // where to put 1st recv atom in each swap
-    int** sendlist;                   // list of atoms to send in each swap
+    MMD_int** sendlist;                   // list of atoms to send in each swap
     int* maxsendlist;
 
     MMD_float* buf_send;                 // send buffer for all comm
@@ -90,15 +90,15 @@ class Comm
     Timer* timer;
 
     int copy_size;
-    int* nsend_thread;
-    int* nrecv_thread;
+    MMD_int* nsend_thread;
+    MMD_int* nrecv_thread;
     int* nholes_thread;
     int** exc_sendlist_thread;
     int* send_flag;
     int* maxsend_thread;
     int maxthreads;
-    int maxnlocal;
-    int nrecv_atoms;
+    MMD_int maxnlocal;
+    MMD_int nrecv_atoms;
 
 		int num_sim_procs;
 		MPI_Comm subcomm;

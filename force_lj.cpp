@@ -118,8 +118,8 @@ void ForceLJ::compute(Atom &atom, Neighbor &neighbor, Comm &comm, int me)
 template<int EVFLAG>
 void ForceLJ::compute_original(Atom &atom, Neighbor &neighbor, int me)
 {
-  int nlocal = atom.nlocal;
-  int nall = atom.nlocal + atom.nghost;
+  MMD_int nlocal = atom.nlocal;
+  MMD_int nall = atom.nlocal + atom.nghost;
   MMD_float* x = atom.x;
   MMD_float* f = atom.f;
   int* type = atom.type;
@@ -128,7 +128,7 @@ void ForceLJ::compute_original(Atom &atom, Neighbor &neighbor, int me)
   virial = 0;
   // clear force on own and ghost atoms
 
-  for(int i = 0; i < nall; i++) {
+  for(MMD_int i = 0; i < nall; i++) {
     f[i * PAD + 0] = 0.0;
     f[i * PAD + 1] = 0.0;
     f[i * PAD + 2] = 0.0;
@@ -137,7 +137,7 @@ void ForceLJ::compute_original(Atom &atom, Neighbor &neighbor, int me)
   // loop over all neighbors of my atoms
   // store force on both atoms i and j
 
-  for(int i = 0; i < nlocal; i++) {
+  for(MMD_int i = 0; i < nlocal; i++) {
     const int* const neighs = &neighbor.neighbors[i * neighbor.maxneighs];
     const int numneigh = neighbor.numneigh[i];
     const MMD_float xtmp = x[i * PAD + 0];
@@ -185,14 +185,14 @@ void ForceLJ::compute_original(Atom &atom, Neighbor &neighbor, int me)
 template<int EVFLAG, int GHOST_NEWTON>
 void ForceLJ::compute_halfneigh(Atom &atom, Neighbor &neighbor, int me)
 {
-  const int nlocal = atom.nlocal;
-  const int nall = atom.nlocal + atom.nghost;
+  const MMD_int nlocal = atom.nlocal;
+  const MMD_int nall = atom.nlocal + atom.nghost;
   const MMD_float* const x = atom.x;
   MMD_float* const f = atom.f;
   const int* const type = atom.type;
 
   // clear force on own and ghost atoms
-  for(int i = 0; i < nall; i++) {
+  for(MMD_int i = 0; i < nall; i++) {
     f[i * PAD + 0] = 0.0;
     f[i * PAD + 1] = 0.0;
     f[i * PAD + 2] = 0.0;
@@ -203,7 +203,7 @@ void ForceLJ::compute_halfneigh(Atom &atom, Neighbor &neighbor, int me)
   MMD_float t_energy = 0;
   MMD_float t_virial = 0;
 
-  for(int i = 0; i < nlocal; i++) {
+  for(MMD_int i = 0; i < nlocal; i++) {
     const int* const neighs = &neighbor.neighbors[i * neighbor.maxneighs];
     const int numneighs = neighbor.numneigh[i];
     const MMD_float xtmp = x[i * PAD + 0];
@@ -274,8 +274,8 @@ void ForceLJ::compute_halfneigh_threaded(Atom &atom, Neighbor &neighbor, int me)
   MMD_float t_eng_vdwl = 0;
   MMD_float t_virial = 0;
 
-  const int nlocal = atom.nlocal;
-  const int nall = atom.nlocal + atom.nghost;
+  const MMD_int nlocal = atom.nlocal;
+  const MMD_int nall = atom.nlocal + atom.nghost;
   const MMD_float* const x = atom.x;
   MMD_float* const f = atom.f;
   const int* const type = atom.type;
@@ -284,7 +284,7 @@ void ForceLJ::compute_halfneigh_threaded(Atom &atom, Neighbor &neighbor, int me)
   // clear force on own and ghost atoms
 
   OMPFORSCHEDULE
-  for(int i = 0; i < nall; i++) {
+  for(MMD_int i = 0; i < nall; i++) {
     f[i * PAD + 0] = 0.0;
     f[i * PAD + 1] = 0.0;
     f[i * PAD + 2] = 0.0;
@@ -294,7 +294,7 @@ void ForceLJ::compute_halfneigh_threaded(Atom &atom, Neighbor &neighbor, int me)
   // store force on both atoms i and j
 
   OMPFORSCHEDULE
-  for(int i = 0; i < nlocal; i++) {
+  for(MMD_int i = 0; i < nlocal; i++) {
     const int* const neighs = &neighbor.neighbors[i * neighbor.maxneighs];
     const int numneighs = neighbor.numneigh[i];
     const MMD_float xtmp = x[i * PAD + 0];
@@ -379,7 +379,7 @@ void ForceLJ::compute_fullneigh(Atom &atom, Neighbor &neighbor, int me)
   // clear force on own and ghost atoms
 
   OMPFORSCHEDULE
-  for(int i = 0; i < nlocal; i++) {
+  for(MMD_int i = 0; i < nlocal; i++) {
     f[i * PAD + 0] = 0.0;
     f[i * PAD + 1] = 0.0;
     f[i * PAD + 2] = 0.0;
@@ -389,7 +389,7 @@ void ForceLJ::compute_fullneigh(Atom &atom, Neighbor &neighbor, int me)
   // store force on atom i
 
   OMPFORSCHEDULE
-  for(int i = 0; i < nlocal; i++) {
+  for(MMD_int i = 0; i < nlocal; i++) {
     const int* const neighs = &neighbor.neighbors[i * neighbor.maxneighs];
     const int numneighs = neighbor.numneigh[i];
     const MMD_float xtmp = x[i * PAD + 0];

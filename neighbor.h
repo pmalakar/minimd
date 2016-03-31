@@ -72,7 +72,7 @@ class Neighbor
   private:
     MMD_float xprd, yprd, zprd;      // box size
 
-    int nmax;                        // max size of atom arrays in neighbor
+    MMD_int nmax;                        // max size of atom arrays in neighbor
     int ntypes;                      // number of atom types
 
     int nstencil;                    // # of bins in stencil

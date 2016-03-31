@@ -104,7 +104,7 @@ class ForceEAM : Force
     virtual void read_file(const char*);
     virtual void file2array();
 
-    void bounds(char* str, int nmax, int &nlo, int &nhi);
+    void bounds(char* str, MMD_int nmax, int &nlo, int &nhi);
 
     void communicate(Atom &atom, Comm &comm);
 };

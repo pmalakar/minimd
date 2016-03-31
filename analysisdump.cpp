@@ -18,6 +18,7 @@
 void Dump::initAnalysisDump(Comm &comm, char *analysiscfg){
 
 	int i, retval;
+	anum = 0;
 
 	if (analysiscfg == NULL) { 
 		printf("Config file NULL error %d\n", comm.me);
@@ -88,13 +89,6 @@ void Dump::apack(Atom &atom, Comm &comm, int n, int aindex) {
 
 	int ret;
 	nlocal = atom.nlocal;
-	bufsize = nlocal;
-
-	/*
-	if (aindex < 2)
-		arraylen = 3 * bufsize;
-	else
-		arraylen = bufsize;*/
 
 	arraylen = adim[aindex] * nlocal;
 	array = (MMD_float *) malloc (arraylen * sizeof(MMD_float));
@@ -105,7 +99,7 @@ void Dump::apack(Atom &atom, Comm &comm, int n, int aindex) {
   MPI_Allreduce (&numAtoms, &totalAtoms, 1, MPI_LONG_LONG_INT, MPI_MAX, comm.subcomm);
 
 //fix
-  for(int i = 0; i < nlocal ; i++) {
+  for(long long int i = 0; i < nlocal ; i++) {
 		if (aindex == 0)
     	array[i * PAD + 0] = atom.x[i * PAD + 0], array[i * PAD + 1] = atom.x[i * PAD + 1], array[i * PAD + 2] = atom.x[i * PAD + 2]; 
 		else if (aindex == 1)
@@ -128,7 +122,7 @@ void Dump::adump(Atom &atom, Comm &comm, int n, int aindex) {
 	//else multiplier = 1;
 
   mpifo = adim[aindex] * (n*totalAtoms + numAtoms - nlocal) * sizeof(MMD_float);
-	if (comm.me < 2) printf("%d: test %lld %lld %lld %lld\n", comm.me, nlocal, numAtoms, totalAtoms, arraylen);
+  if (comm.me < 2) printf("%d: %d: %d: test %lld %lld %lld %lld\n", comm.me, n, aindex, nlocal, numAtoms, totalAtoms, arraylen);
 
   double t = MPI_Wtime();
 
@@ -213,3 +207,7 @@ void Dump::finiAnalysisDump() {
 
 }
 
+char *Dump::getConfigFile ()
+{
+	return configFile;
+}

@@ -79,8 +79,8 @@ Neighbor::~Neighbor()
 void Neighbor::build(Atom &atom)
 {
   ncalls++;
-  const int nlocal = atom.nlocal;
-  const int nall = atom.nlocal + atom.nghost;
+  const MMD_int nlocal = atom.nlocal;
+  const MMD_int nall = atom.nlocal + atom.nghost;
   /* extend atom arrays if necessary */
 
   #pragma omp master
@@ -214,8 +214,8 @@ void Neighbor::build(Atom &atom)
 
 void Neighbor::binatoms(Atom &atom, int count)
 {
-  const int nlocal = atom.nlocal;
-  const int nall = count<0?atom.nlocal + atom.nghost:count;
+  const MMD_int nlocal = atom.nlocal;
+  const MMD_int nall = count<0?atom.nlocal + atom.nghost:count;
   const MMD_float* const x = atom.x;
 
   xprd = atom.box.xprd;
@@ -235,7 +235,7 @@ void Neighbor::binatoms(Atom &atom, int count)
 
 
     OMPFORSCHEDULE
-    for(int i = 0; i < nall; i++) {
+    for(MMD_int i = 0; i < nall; i++) {
       const int ibin = coord2bin(x[i * PAD + 0], x[i * PAD + 1], x[i * PAD + 2]);
 
       if(bincount[ibin] < atoms_per_bin) {
@@ -317,7 +317,8 @@ stencil() = bin offsets in 1-d sense for stencil of surrounding bins
 
 int Neighbor::setup(Atom &atom)
 {
-  int i, j, k, nmax;
+  int i, j, k; 
+  MMD_int nmax;
   MMD_float coord;
   int mbinxhi, mbinyhi, mbinzhi;
   int nextx, nexty, nextz;
@@ -415,6 +416,7 @@ int Neighbor::setup(Atom &atom)
   if(nextz * binsizez < FACTOR * cutneigh) nextz++;
 
   nmax = (2 * nextz + 1) * (2 * nexty + 1) * (2 * nextx + 1);
+	printf("nmax %i %i %i %i\n", nmax, nextz, nexty, nextx);
 
   if(stencil) free(stencil);
 

@@ -47,9 +47,9 @@ struct Box {
 class Atom
 {
   public:
-    int natoms;
-    int nlocal, nghost;
-    int nmax;
+    MMD_int natoms;
+    MMD_int nlocal, nghost;
+    MMD_int nmax;
 
     MMD_float* x;
     MMD_float* v;
@@ -75,23 +75,23 @@ class Atom
 
     void copy(int, int);
 
-    void pack_comm(int, int*, MMD_float*, int*);
-    void unpack_comm(int, int, MMD_float*);
-    void pack_reverse(int, int, MMD_float*);
-    void unpack_reverse(int, int*, MMD_float*);
+    void pack_comm(MMD_int, MMD_int*, MMD_float*, int*);
+    void unpack_comm(MMD_int, int, MMD_float*);
+    void pack_reverse(MMD_int, int, MMD_float*);
+    void unpack_reverse(MMD_int, MMD_int*, MMD_float*);
 
     int pack_border(int, MMD_float*, int*);
-    int unpack_border(int, MMD_float*);
+    int unpack_border(MMD_int, MMD_float*);
     int pack_exchange(int, MMD_float*);
     int unpack_exchange(int, MMD_float*);
     int skip_exchange(MMD_float*);
 
-    MMD_float* realloc_2d_MMD_float_array(MMD_float*, int, int, int);
-    MMD_float* create_2d_MMD_float_array(int, int);
+    MMD_float* realloc_2d_MMD_float_array(MMD_float*, MMD_int, int, int);
+    MMD_float* create_2d_MMD_float_array(MMD_int, int);
     void destroy_2d_MMD_float_array(MMD_float*);
 
-    int* realloc_1d_int_array(int*, int, int);
-    int* create_1d_int_array(int);
+    int* realloc_1d_int_array(int*, MMD_int, int);
+    int* create_1d_int_array(MMD_int);
     void destroy_1d_int_array(int*);
 
     void sort(Neighbor & neighbor);

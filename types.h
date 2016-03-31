@@ -70,7 +70,7 @@ typedef double MMD_float;
 typedef double2 MMD_float2;
 typedef double4 MMD_float4;
 #endif
-typedef int MMD_int;
+typedef long long int MMD_int;
 typedef int MMD_bigint;
 
 

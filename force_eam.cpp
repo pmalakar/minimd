@@ -816,7 +816,7 @@ void ForceEAM::grab(FILE* fptr, MMD_int n, MMD_float* list)
 
 /* ---------------------------------------------------------------------- */
 
-MMD_float ForceEAM::single(int i, int j, int itype, int jtype,
+MMD_float ForceEAM::single(MMD_int i, MMD_int j, MMD_int itype, MMD_int jtype,
                            MMD_float rsq, MMD_float factor_coul, MMD_float factor_lj,
                            MMD_float &fforce)
 {
@@ -867,7 +867,7 @@ void ForceEAM::communicate(Atom &atom, Comm &comm)
     pbc_flags[3] = comm.pbc_flagz[iswap];
     //timer->stamp_extra_start();
 
-    int size = pack_comm(comm.sendnum[iswap], iswap, comm.buf_send, comm.sendlist);
+    MMD_int size = pack_comm(comm.sendnum[iswap], iswap, comm.buf_send, comm.sendlist);
     //timer->stamp_extra_stop(TIME_TEST);
 
 
@@ -898,7 +898,7 @@ void ForceEAM::communicate(Atom &atom, Comm &comm)
 }
 /* ---------------------------------------------------------------------- */
 
-int ForceEAM::pack_comm(int n, int iswap, MMD_float* buf, int** asendlist)
+MMD_int ForceEAM::pack_comm(int n, int iswap, MMD_float* buf, MMD_int** asendlist)
 {
   int i, j, m;
 
@@ -926,7 +926,7 @@ void ForceEAM::unpack_comm(int n, int first, MMD_float* buf)
 
 /* ---------------------------------------------------------------------- */
 
-int ForceEAM::pack_reverse_comm(int n, int first, MMD_float* buf)
+MMD_int ForceEAM::pack_reverse_comm(MMD_int n, MMD_int first, MMD_float* buf)
 {
   int i, m, last;
 
@@ -940,7 +940,7 @@ int ForceEAM::pack_reverse_comm(int n, int first, MMD_float* buf)
 
 /* ---------------------------------------------------------------------- */
 
-void ForceEAM::unpack_reverse_comm(int n, int* list, MMD_float* buf)
+void ForceEAM::unpack_reverse_comm(MMD_int n, MMD_int* list, MMD_float* buf)
 {
   int i, j, m;
 
@@ -963,7 +963,7 @@ MMD_float ForceEAM::memory_usage()
 }
 
 
-void ForceEAM::bounds(char* str, int nmax, int &nlo, int &nhi)
+void ForceEAM::bounds(char* str, MMD_int nmax, int &nlo, int &nhi)
 {
   char* ptr = strchr(str, '*');
 

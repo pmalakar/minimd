@@ -39,7 +39,7 @@
 Thermo::Thermo() {}
 Thermo::~Thermo() {}
 
-void Thermo::setup(MMD_float rho_in, Integrate &integrate, Atom &atom, int units)
+void Thermo::setup(MMD_float rho_in, Integrate &integrate, Atom &atom, MMD_int units)
 {
   rho = rho_in;
   ntimes = integrate.ntimes;

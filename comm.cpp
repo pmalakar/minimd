@@ -167,8 +167,8 @@ int Comm::setup(MMD_float cutneigh, Atom &atom)
   recvproc = (int*) malloc(maxswap * sizeof(int));
   sendproc_exc = (int*) malloc(maxswap * sizeof(int));
   recvproc_exc = (int*) malloc(maxswap * sizeof(int));
-  sendnum = (int*) malloc(maxswap * sizeof(int));
-  recvnum = (int*) malloc(maxswap * sizeof(int));
+  sendnum = (long long int*) malloc(maxswap * sizeof(long long int));
+  recvnum = (long long int*) malloc(maxswap * sizeof(long long int));
   comm_send_size = (int*) malloc(maxswap * sizeof(int));
   comm_recv_size = (int*) malloc(maxswap * sizeof(int));
   reverse_send_size = (int*) malloc(maxswap * sizeof(int));
@@ -188,10 +188,10 @@ int Comm::setup(MMD_float cutneigh, Atom &atom)
 
   for(i = 0; i < maxswap; i++) maxsendlist[i] = BUFMIN;
 
-  sendlist = (int**) malloc(maxswap * sizeof(int*));
+  sendlist = (MMD_int**) malloc(maxswap * sizeof(MMD_int*));
 
   for(i = 0; i < maxswap; i++)
-    sendlist[i] = (int*) malloc(BUFMIN * sizeof(int));
+    sendlist[i] = (MMD_int*) malloc(BUFMIN * sizeof(MMD_int));
 
   /* setup 4 parameters for each exchange: (spart,rpart,slablo,slabhi)
      sendproc(nswap) = proc to send to at each swap
@@ -295,6 +295,7 @@ void Comm::communicate(Atom &atom)
 
     //#pragma omp barrier
     atom.pack_comm(sendnum[iswap], sendlist[iswap], buf_send, pbc_flags);
+	if (me == 0) printf("sendnum=%i\n", sendnum[iswap]);
 
     //#pragma omp barrier
 
@@ -389,7 +390,7 @@ void Comm::exchange(Atom &atom)
   if(do_safeexchange)
     return exchange_all(atom);
 
-  int i, m, n, idim, nsend, nrecv, nrecv1, nrecv2, nlocal;
+  MMD_int i, m, n, idim, nsend, nrecv, nrecv1, nrecv2, nlocal;
   MMD_float lo, hi, value;
   MMD_float* x;
 
@@ -438,8 +439,8 @@ void Comm::exchange(Atom &atom)
 
       if(maxthreads < threads->omp_num_threads) {
         maxthreads = threads->omp_num_threads;
-        nsend_thread = new int [maxthreads];
-        nrecv_thread = new int [maxthreads];
+        nsend_thread = new MMD_int [maxthreads];
+        nrecv_thread = new MMD_int [maxthreads];
         nholes_thread = new int [maxthreads];
         maxsend_thread = new int [maxthreads];
         exc_sendlist_thread = new int*[maxthreads];
@@ -462,7 +463,7 @@ void Comm::exchange(Atom &atom)
     }
 
     #pragma omp for
-    for(int i = 0; i < nlocal; i++) {
+    for(MMD_int i = 0; i < nlocal; i++) {
       if(x[i * PAD + idim] < lo || x[i * PAD + idim] >= hi) {
         if(nsend >= maxsend_thread[tid])  {
           maxsend_thread[tid] = nsend + 100;
@@ -481,7 +482,7 @@ void Comm::exchange(Atom &atom)
 
     #pragma omp master
     {
-      int total_nsend = 0;
+      MMD_int total_nsend = 0;
 
       for(int i = 0; i < threads->omp_num_threads; i++) {
         total_nsend += nsend_thread[i];
@@ -493,10 +494,10 @@ void Comm::exchange(Atom &atom)
 
     #pragma omp barrier
 
-    int total_nsend = nsend_thread[threads->omp_num_threads - 1];
+    MMD_int total_nsend = nsend_thread[threads->omp_num_threads - 1];
     int nholes = 0;
 
-    for(int i = 0; i < nsend; i++)
+    for(MMD_int i = 0; i < nsend; i++)
       if(exc_sendlist_thread[tid][i] < nlocal - total_nsend)
         nholes++;
 
@@ -514,7 +515,7 @@ void Comm::exchange(Atom &atom)
     }
     #pragma omp barrier
 
-    int j = nlocal;
+    MMD_int j = nlocal;
     int holes = 0;
 
     while(holes < nholes_thread[tid]) {
@@ -524,7 +525,7 @@ void Comm::exchange(Atom &atom)
     }
 
 
-    for(int k = 0; k < nsend; k++) {
+    for(MMD_int k = 0; k < nsend; k++) {
       atom.pack_exchange(exc_sendlist_thread[tid][k], &buf_send[(k + nsend_thread[tid] - nsend) * 7]);
 
       if(exc_sendlist_thread[tid][k] < nlocal - total_nsend) {
@@ -539,18 +540,23 @@ void Comm::exchange(Atom &atom)
     #pragma omp master
     {
       atom.nlocal = nlocal - total_nsend;
+		  if (me < 2) printf("nlocal=%i, total_nsend=%i\n", nlocal, total_nsend); 
       nsend = total_nsend * 7;
 
       /* send/recv atoms in both directions
          only if neighboring procs are different */
 
-      MPI_Send(&nsend, 1, MPI_INT, procneigh[idim][0], 0, subcomm);
-      MPI_Recv(&nrecv1, 1, MPI_INT, procneigh[idim][1], 0, subcomm, &status);
+      MPI_Send(&nsend, 1, MPI_LONG_LONG_INT, procneigh[idim][0], 0, subcomm);
+      MPI_Recv(&nrecv1, 1, MPI_LONG_LONG_INT, procneigh[idim][1], 0, subcomm, &status);
+      //MPI_Send(&nsend, 1, MPI_INT, procneigh[idim][0], 0, subcomm);
+      //MPI_Recv(&nrecv1, 1, MPI_INT, procneigh[idim][1], 0, subcomm, &status);
       nrecv = nrecv1;
 
       if(procgrid[idim] > 2) {
-        MPI_Send(&nsend, 1, MPI_INT, procneigh[idim][1], 0, subcomm);
-        MPI_Recv(&nrecv2, 1, MPI_INT, procneigh[idim][0], 0, subcomm, &status);
+        MPI_Send(&nsend, 1, MPI_LONG_LONG_INT, procneigh[idim][1], 0, subcomm);
+        MPI_Recv(&nrecv2, 1, MPI_LONG_LONG_INT, procneigh[idim][0], 0, subcomm, &status);
+        //MPI_Send(&nsend, 1, MPI_INT, procneigh[idim][1], 0, subcomm);
+        //MPI_Recv(&nrecv2, 1, MPI_INT, procneigh[idim][0], 0, subcomm, &status);
         nrecv += nrecv2;
       }
 
@@ -596,7 +602,7 @@ void Comm::exchange(Atom &atom)
     nrecv = 0;
 
     #pragma omp for
-    for(int i = 0; i < nrecv_atoms; i++) {
+    for(MMD_int i = 0; i < nrecv_atoms; i++) {
       value = buf_recv[i * 7 + idim];
 
       if(value >= lo && value < hi)
@@ -609,7 +615,7 @@ void Comm::exchange(Atom &atom)
 
     #pragma omp master
     {
-      int total_nrecv = 0;
+      MMD_int total_nrecv = 0;
 
       for(int i = 0; i < threads->omp_num_threads; i++) {
         total_nrecv += nrecv_thread[i];
@@ -620,10 +626,10 @@ void Comm::exchange(Atom &atom)
     }
     #pragma omp barrier
 
-    int copyinpos = nlocal + nrecv_thread[tid] - nrecv;
+    MMD_int copyinpos = nlocal + nrecv_thread[tid] - nrecv;
 
     #pragma omp for
-    for(int i = 0; i < nrecv_atoms; i++) {
+    for(MMD_int i = 0; i < nrecv_atoms; i++) {
       value = buf_recv[i * 7 + idim];
 
       if(value >= lo && value < hi)
@@ -637,7 +643,7 @@ void Comm::exchange(Atom &atom)
 
 void Comm::exchange_all(Atom &atom)
 {
-  int i, m, n, idim, nsend, nrecv, nrecv1, nrecv2, nlocal;
+  MMD_int i, m, n, idim, nsend, nrecv, nrecv1, nrecv2, nlocal;
   MMD_float lo, hi, value;
   MMD_float* x;
 
@@ -696,8 +702,10 @@ void Comm::exchange_all(Atom &atom)
     *        only if neighboring procs are different */
     for(int ineed = 0; ineed < 2 * need[idim]; ineed += 1) {
       if(ineed < procgrid[idim] - 1) {
-        MPI_Send(&nsend, 1, MPI_INT, sendproc_exc[iswap], 0, subcomm);
-        MPI_Recv(&nrecv, 1, MPI_INT, recvproc_exc[iswap], 0, subcomm, &status);
+        //MPI_Send(&nsend, 1, MPI_INT, sendproc_exc[iswap], 0, subcomm);
+        //MPI_Recv(&nrecv, 1, MPI_INT, recvproc_exc[iswap], 0, subcomm, &status);
+        MPI_Send(&nsend, 1, MPI_LONG_LONG_INT, sendproc_exc[iswap], 0, subcomm);
+        MPI_Recv(&nrecv, 1, MPI_LONG_LONG_INT, recvproc_exc[iswap], 0, subcomm, &status);
 
         if(nrecv > maxrecv) growrecv(nrecv);
 
@@ -747,7 +755,7 @@ void Comm::exchange_all(Atom &atom)
 
 void Comm::borders(Atom &atom)
 {
-  int i, m, n, iswap, idim, ineed, nsend, nrecv, nall, nfirst, nlast;
+  MMD_int i, m, n, iswap, idim, ineed, nsend, nrecv, nall, nfirst, nlast;
   MMD_float lo, hi;
   int pbc_flags[4];
   MMD_float* x;
@@ -773,8 +781,8 @@ void Comm::borders(Atom &atom)
 
       if(maxthreads < threads->omp_num_threads) {
         maxthreads = threads->omp_num_threads;
-        nsend_thread = new int [maxthreads];
-        nrecv_thread = new int [maxthreads];
+        nsend_thread = new MMD_int [maxthreads];
+        nrecv_thread = new MMD_int [maxthreads];
         nholes_thread = new int [maxthreads];
         maxsend_thread = new int [maxthreads];
         exc_sendlist_thread = new int*[maxthreads];
@@ -839,7 +847,7 @@ void Comm::borders(Atom &atom)
 
       #pragma omp master
       {
-        int total_nsend = 0;
+        MMD_int total_nsend = 0;
 
         for(int i = 0; i < threads->omp_num_threads; i++) {
           total_nsend += nsend_thread[i];
@@ -852,7 +860,7 @@ void Comm::borders(Atom &atom)
       }
       #pragma omp barrier
 
-      for(int k = 0; k < nsend; k++) {
+      for(MMD_int k = 0; k < nsend; k++) {
         atom.pack_border(exc_sendlist_thread[tid][k], &buf_send[(k + nsend_thread[tid] - nsend) * 4], pbc_flags);
         sendlist[iswap][k + nsend_thread[tid] - nsend] = exc_sendlist_thread[tid][k];
       }
@@ -869,8 +877,10 @@ void Comm::borders(Atom &atom)
         nsend = nsend_thread[threads->omp_num_threads - 1];
 
         if(sendproc[iswap] != me) {
-          MPI_Send(&nsend, 1, MPI_INT, sendproc[iswap], 0, subcomm);
-          MPI_Recv(&nrecv, 1, MPI_INT, recvproc[iswap], 0, subcomm, &status);
+          //MPI_Send(&nsend, 1, MPI_INT, sendproc[iswap], 0, subcomm);
+          //MPI_Recv(&nrecv, 1, MPI_INT, recvproc[iswap], 0, subcomm, &status);
+          MPI_Send(&nsend, 1, MPI_LONG_LONG_INT, sendproc[iswap], 0, subcomm);
+          MPI_Recv(&nrecv, 1, MPI_LONG_LONG_INT, recvproc[iswap], 0, subcomm, &status);
 
           if(nrecv * atom.border_size > maxrecv) growrecv(nrecv * atom.border_size);
 
@@ -902,7 +912,7 @@ void Comm::borders(Atom &atom)
       nrecv = nrecv_atoms;
 
       #pragma omp for
-      for(int i = 0; i < nrecv; i++)
+      for(MMD_int i = 0; i < nrecv; i++)
         atom.unpack_border(n + i, &buf[i * 4]);
 
       // #pragma omp barrier
@@ -963,5 +973,5 @@ void Comm::growlist(int iswap, int n)
 {
   maxsendlist[iswap] = static_cast<int>(BUFFACTOR * n);
   sendlist[iswap] =
-    (int*) realloc(sendlist[iswap], maxsendlist[iswap] * sizeof(int));
+    (MMD_int*) realloc(sendlist[iswap], maxsendlist[iswap] * sizeof(MMD_int));
 }

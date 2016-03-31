@@ -26,6 +26,7 @@ Dump::Dump(){
 	output_frequency = 0;
 
 	//dumpfp = NULL;
+	anum = 0;
 	adim = NULL;
 	atevery = NULL;
 	atsteps = NULL;
@@ -135,7 +136,7 @@ void Dump::pack(Atom &atom, int n, Comm &comm) {
 	//  double t = MPI_Wtime();
 
 	//copy from simulation buffer
-	for(int i = 0; i < nlocal ; i++) {
+	for(MMD_int i = 0; i < nlocal ; i++) {
 
 		//positions
 		pos[i * PAD + 0] = atom.x[i * PAD + 0], pos[i * PAD + 1] = atom.x[i * PAD + 1], pos[i * PAD + 2] = atom.x[i * PAD + 2];

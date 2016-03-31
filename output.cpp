@@ -61,8 +61,9 @@ void output(In &in, Atom &atom, Force* force, Neighbor &neighbor, Comm &comm,
 
   atom.pbc();
 
-  int natoms;
-  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, comm.subcomm);
+  MMD_int natoms;
+  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_LONG_LONG_INT, MPI_SUM, comm.subcomm);
+  //MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, comm.subcomm);
 
   int nlost = 0;
 

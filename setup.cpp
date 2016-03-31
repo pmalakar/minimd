@@ -170,8 +170,8 @@ void read_lammps_atoms(Atom &atom, MMD_float* x)
 {
   int i;
 
-  int nread = 0;
-  int natoms = atom.natoms;
+  MMD_int nread = 0;
+  MMD_int natoms = atom.natoms;
   atom.nlocal = 0;
 
   int type;
@@ -193,8 +193,8 @@ void read_lammps_velocities(Atom &atom, MMD_float* v)
 {
   int i;
 
-  int nread = 0;
-  int natoms = atom.natoms;
+  MMD_int nread = 0;
+  MMD_int natoms = atom.natoms;
 
   double x, y, z;
 
@@ -275,7 +275,7 @@ int read_lammps_data(Atom &atom, Comm &comm, Neighbor &neighbor, Integrate &inte
     read_lammps_parse_keyword(0);
   }
 
-  for(int i = 0; i < atom.natoms; i++) {
+  for(MMD_int i = 0; i < atom.natoms; i++) {
     if(x[i * PAD + 0] >= atom.box.xlo && x[i * PAD + 0] < atom.box.xhi &&
         x[i * PAD + 1] >= atom.box.ylo && x[i * PAD + 1] < atom.box.yhi &&
         x[i * PAD + 2] >= atom.box.zlo && x[i * PAD + 2] < atom.box.zhi)
@@ -287,8 +287,9 @@ int read_lammps_data(Atom &atom, Comm &comm, Neighbor &neighbor, Integrate &inte
 
   /* check that correct # of atoms were created */
 
-  int natoms;
-  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MMD_int natoms;
+  //MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
 
   if(natoms != atom.natoms) {
     if(me == 0) printf("Created incorrect # of atoms\n");
@@ -437,8 +438,9 @@ int create_atoms(Atom &atom, int nx, int ny, int nz, double rho)
 
   /* check that correct # of atoms were created */
 
-  int natoms;
-  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MMD_int natoms;
+  //MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
 
   if(natoms != atom.natoms) {
     if(me == 0) printf("Created incorrect # of atoms\n");

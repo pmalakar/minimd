@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   int ntypes = 4;
 	
   int num_sim_procs = 0;
-  int dump_frequency = 1;
+  int dump_frequency = 0;
 	char *dumpdir = NULL;
 	char *analysiscfg = NULL;
 
@@ -530,8 +530,9 @@ int main(int argc, char** argv)
   integrate.run(atom, force, neighbor, comm, thermo, timer, dump);
   timer.barrier_stop(TIME_TOTAL);
 
-  int natoms;
-  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MMD_int natoms;
+  MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+  //MPI_Allreduce(&atom.nlocal, &natoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   force->evflag = 1;
   force->compute(atom, neighbor, comm, me);
@@ -549,7 +550,7 @@ int main(int argc, char** argv)
     printf("\n\n");
     printf("# Performance Summary:\n");
     printf("# MPI_proc OMP_threads nsteps natoms t_total t_force t_neigh t_comm t_other performance perf/thread grep_string t_extra\n");
-    printf("%i %i %i %i %lf %lf %lf %lf %lf %lf %lf PERF_SUMMARY %lf\n\n\n",
+    printf("%i %i %i %lld %lf %lf %lf %lf %lf %lf %lf PERF_SUMMARY %lf\n\n\n",
            nprocs, num_threads, integrate.ntimes, natoms,
            timer.array[TIME_TOTAL], timer.array[TIME_FORCE], timer.array[TIME_NEIGH], timer.array[TIME_COMM], time_other,
            1.0 * natoms * integrate.ntimes / timer.array[TIME_TOTAL], 1.0 * natoms * integrate.ntimes / timer.array[TIME_TOTAL] / nprocs / num_threads, timer.array[TIME_TEST]);

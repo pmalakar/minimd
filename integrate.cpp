@@ -38,7 +38,7 @@
 #include "dump.h"
 #include "client.h"
 
-Integrate::Integrate() {sort_every=20;}
+Integrate::Integrate() {sort_every=40;}
 Integrate::~Integrate() {}
 
 void Integrate::setup()
@@ -170,7 +170,7 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
           }
 
           if(check_safeexchange)
-            for(int i = 0; i < PAD * atom.nlocal; i++) xold[i] = x[i];
+            for(MMD_int i = 0; i < PAD * atom.nlocal; i++) xold[i] = x[i];
         }
 
         #pragma omp barrier
@@ -205,11 +205,13 @@ void Integrate::run(Atom &atom, Force* force, Neighbor &neighbor,
       finalIntegrate();
 	 
 //#ifdef DEBUG
-	 // if (n % dump.getFreq() == 0)
-	 //  dump.writeFile(atom, n, comm);
+	  if (dump.getFreq() > 0)	
+	   if (n % dump.getFreq() == 0)
+	    dump.writeFile(atom, n, comm);
 
-		for(int j=0; j<dump.anum; j++)
-			if(n % dump.afreq[j] == 0)
+	  if (dump.getConfigFile() != NULL)	
+		 for(int j=0; j<dump.anum; j++)
+		  if(n % dump.afreq[j] == 0)
 	   		dump.writeAOutput(atom, comm, n, j);
 
 	  //writeRemote(atom, n, comm, dump);

@@ -70,7 +70,7 @@ Atom::~Atom()
 
 void Atom::growarray()
 {
-  int nold = nmax;
+  MMD_int nold = nmax;
   nmax += DELTA;
   x = (MMD_float*) realloc_2d_MMD_float_array(x, nmax, PAD, PAD * nold);
   v = (MMD_float*) realloc_2d_MMD_float_array(v, nmax, PAD, PAD * nold);
@@ -106,7 +106,7 @@ void Atom::addatom(MMD_float x_in, MMD_float y_in, MMD_float z_in,
 void Atom::pbc()
 {
   #pragma omp for
-  for(int i = 0; i < nlocal; i++) {
+  for(MMD_int i = 0; i < nlocal; i++) {
     if(x[i*PAD + 0] < 0.0) x[i * PAD + 0] += box.xprd;
 
     if(x[i * PAD + 0] >= box.xprd) x[i * PAD + 0] -= box.xprd;
@@ -132,9 +132,9 @@ void Atom::copy(int i, int j)
   type[j] = type[i];
 }
 
-void Atom::pack_comm(int n, int* list, MMD_float* buf, int* pbc_flags)
+void Atom::pack_comm(MMD_int n, MMD_int* list, MMD_float* buf, int* pbc_flags)
 {
-  int i, j;
+  MMD_int i, j;
 
   if(pbc_flags[0] == 0) {
 
@@ -157,9 +157,9 @@ void Atom::pack_comm(int n, int* list, MMD_float* buf, int* pbc_flags)
   }
 }
 
-void Atom::unpack_comm(int n, int first, MMD_float* buf)
+void Atom::unpack_comm(MMD_int n, int first, MMD_float* buf)
 {
-  int i;
+  MMD_int i;
 
   #pragma omp for schedule(static)
   for(i = 0; i < n; i++) {
@@ -169,9 +169,9 @@ void Atom::unpack_comm(int n, int first, MMD_float* buf)
   }
 }
 
-void Atom::pack_reverse(int n, int first, MMD_float* buf)
+void Atom::pack_reverse(MMD_int n, int first, MMD_float* buf)
 {
-  int i;
+  MMD_int i;
 
   #pragma omp for schedule(static)
   for(i = 0; i < n; i++) {
@@ -181,9 +181,9 @@ void Atom::pack_reverse(int n, int first, MMD_float* buf)
   }
 }
 
-void Atom::unpack_reverse(int n, int* list, MMD_float* buf)
+void Atom::unpack_reverse(MMD_int n, MMD_int* list, MMD_float* buf)
 {
-  int i, j;
+  MMD_int i, j;
 
   #pragma omp for schedule(static)
   for(i = 0; i < n; i++) {
@@ -213,7 +213,7 @@ int Atom::pack_border(int i, MMD_float* buf, int* pbc_flags)
   return m;
 }
 
-int Atom::unpack_border(int i, MMD_float* buf)
+int Atom::unpack_border(MMD_int i, MMD_float* buf)
 {
   if(i == nmax) growarray();
 
@@ -261,7 +261,7 @@ int Atom::skip_exchange(MMD_float* buf)
 /* realloc a 2-d MMD_float array */
 
 MMD_float* Atom::realloc_2d_MMD_float_array(MMD_float* array,
-    int n1, int n2, int nold)
+    MMD_int n1, int n2, int nold)
 
 {
   MMD_float* newarray;
@@ -277,7 +277,7 @@ MMD_float* Atom::realloc_2d_MMD_float_array(MMD_float* array,
 
 /* create a 2-d MMD_float array */
 
-MMD_float* Atom::create_2d_MMD_float_array(int n1, int n2)
+MMD_float* Atom::create_2d_MMD_float_array(MMD_int n1, int n2)
 {
   MMD_float* array;
 
@@ -306,7 +306,7 @@ void Atom::destroy_2d_MMD_float_array(MMD_float* array)
 }
 
 int * Atom::realloc_1d_int_array(int* array,
-    int n1, int nold)
+    MMD_int n1, int nold)
 
 {
   int* newarray;
@@ -322,7 +322,7 @@ int * Atom::realloc_1d_int_array(int* array,
 
 /* create a 2-d MMD_float array */
 
-int * Atom::create_1d_int_array(int n1)
+int * Atom::create_1d_int_array(MMD_int n1)
 {
   int ALIGN = 16;
   int* data;

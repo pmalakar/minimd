@@ -20,10 +20,10 @@ class Dump
 	int output_frequency;
 	int num_steps;
 
-	long long int nlocal;
-	long long int numAtoms;
-	long long int totalAtoms;
-	long long int bufsize;
+	MMD_int nlocal; //long long int nlocal;
+	MMD_int numAtoms;
+	MMD_int totalAtoms;
+	MMD_int bufsize;
 	int count, rcount;
 
 	MPI_Offset mpifo;
@@ -33,7 +33,7 @@ class Dump
 
 	MPI_File *afh;
 	MMD_float *array; 
-	long long int arraylen;
+	MMD_int arraylen;
 
 	char *configFile;
 
@@ -52,6 +52,7 @@ class Dump
   ~Dump();
 
 	int getFreq();
+	char *getConfigFile();
   void initDump(Comm &, int, int, char *, char *);
 	void writeFile(Atom &, int, Comm &);
 	void pack(Atom &, int, Comm &);
