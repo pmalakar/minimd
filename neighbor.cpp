@@ -416,7 +416,6 @@ int Neighbor::setup(Atom &atom)
   if(nextz * binsizez < FACTOR * cutneigh) nextz++;
 
   nmax = (2 * nextz + 1) * (2 * nexty + 1) * (2 * nextx + 1);
-	printf("nmax %i %i %i %i\n", nmax, nextz, nexty, nextx);
 
   if(stencil) free(stencil);
 

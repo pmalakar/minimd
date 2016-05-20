@@ -295,7 +295,6 @@ void Comm::communicate(Atom &atom)
 
     //#pragma omp barrier
     atom.pack_comm(sendnum[iswap], sendlist[iswap], buf_send, pbc_flags);
-	if (me == 0) printf("sendnum=%i\n", sendnum[iswap]);
 
     //#pragma omp barrier
 
@@ -540,7 +539,7 @@ void Comm::exchange(Atom &atom)
     #pragma omp master
     {
       atom.nlocal = nlocal - total_nsend;
-		  if (me < 2) printf("nlocal=%i, total_nsend=%i\n", nlocal, total_nsend); 
+		  //if (me < 2) printf("nlocal=%i, total_nsend=%i\n", nlocal, total_nsend); 
       nsend = total_nsend * 7;
 
       /* send/recv atoms in both directions
