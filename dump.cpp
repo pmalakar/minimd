@@ -231,9 +231,9 @@ void Dump::finiDump(Comm &comm) {
 
 	if (anum>0)	finiAnalysisDump();
 
-	if (comm.me == 0)
-	 for (int i=0; i<num_steps; i++)
-		printf("Time to write %d %lf\n", i, time_to_write[i]);
+//	if (comm.me == 0)
+//	 for (int i=0; i<num_steps; i++)
+//		printf("Time to write %d %lf\n", i, time_to_write[i]);
 
 }
 
