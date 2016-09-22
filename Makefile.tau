@@ -2,7 +2,7 @@
 SHELL = /bin/sh
 
 #Compiler and Linker
-CC = tau_cxx.sh   #mpixlcxx
+CC = tau_cxx.sh
 #CC       = /bgsys/drivers/ppcfloor/comm/xl.ndebug/bin/mpixlcxx_r
 LINK = $(CC)
 
